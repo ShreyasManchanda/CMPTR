@@ -138,14 +138,6 @@ Response:
 
 ## What to record for the demo GIF
 
-Record a terminal + browser split:
-1. `docker run` command executing in terminal
-2. FastAPI docs page at `/docs` loading in browser
-3. POST request to `/analyze` with a real category (e.g., "laptop stands")
-4. JSON response with resolved signals and recommended actions appearing
-
-Keep it under 45 seconds. Use [Kap](https://getkap.co) (Mac) or [ScreenToGif](https://screentogif.com) (Windows).
-
 ---
 
 ## Project Structure
