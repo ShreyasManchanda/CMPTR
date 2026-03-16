@@ -143,15 +143,31 @@ Response:
 ## Project Structure
 
 ```
-CMPT/
-├── app/
-│   ├── main.py           # FastAPI entrypoint
-│   ├── agents/           # CrewAI agent definitions
-│   ├── tools/            # Crawler + normaliser tools
-│   └── engine/           # Rule-based pricing logic
-├── Dockerfile
-├── requirements.txt
-└── .env.example
+CMPTR/
+├── backend/
+│   ├── agent/
+│   │   ├── ambiguity_agent.py
+│   │   ├── explanation_agent.py
+│   │   └── __init__.py
+│   ├── config/
+│   │   ├── agents.yaml
+│   │   ├── config_loader.py
+│   │   └── __init__.py
+│   ├── normalizer/
+│   │   ├── normalize_product.py
+│   │   └── __init__.py
+│   ├── pricing/
+│   │   ├── pricing_engine.py
+│   │   ├── rules_agent.py
+│   │   └── __init__.py
+│   ├── scraper/
+│   │   ├── crawler.py
+│   │   ├── scraper.py
+│   │   └── __init__.py
+│   └── utils/
+├── .gitignore
+├── LICENSE
+└── README.md
 ```
 
 ---
