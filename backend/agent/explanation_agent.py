@@ -1,3 +1,4 @@
+from doctest import debug_script
 import os
 from crewai import Agent, Crew, Process, Task, LLM
 from config import load_agents_config
@@ -7,7 +8,7 @@ from dotenv import load_dotenv
 import logging
 
 
-logger = logging.getLogger("ambiguity_agent_direct")
+logger = logging.getLogger("explanation_agent_direct")
 if not logger.handlers:
     logging.basicConfig(level=logging.INFO)
 
@@ -23,12 +24,6 @@ agents_config = llm_config['explanation-agent']
 
 
 class ExplanationAgent:
-    llm = LLM(
-    model="gemini-2.5-flash", 
-    temperature=0.2, 
-    timeout=120,           
-    max_tokens=400,        
-)
 
     def __init__(self):
         self.agents_config = agents_config
@@ -47,8 +42,39 @@ class ExplanationAgent:
             llm= self.llm
         )
 
-    def get_explanation(self, )
-    
+    def get_explanation(self, final_action, ambiguity_advice, metrics):
+        task=Task(
+            description=f"""
+                You are given the final pricing decision and the supporting context.
+                
+                Final Action:
+                {final_action}
+                
+                Ambiguity Advice:
+                {ambiguity_advice}
+                
+                Metrics:
+                {metrics}
+                
+                Write a clear Markdown explanation for a store owner in 3 t0 6 sentences.
+                Explain what the system decided, why it decided that way, and what the merchant should do next.
+                
+                Rules:
+                - Do not suggest prices.
+                - Do not change the decision.
+                - Do not mention raw URLs, HTML, or internal implementation details.
+                """,
+            expected_output="""
+                A short Markdown explanation in 3 to 6 sentences that clearly explains the final pricing action, the reason behind it, any ambiguity advice if relevant, and the next step for the merchant.
+                """,
+            agent=self.agent
+        )
+        crew = Crew(
+                agents=[self.agent],
+                tasks = [task],
+                process = Process.sequential
+            )
+        return crew.kickoff()
 
 
 

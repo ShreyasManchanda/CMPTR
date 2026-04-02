@@ -1,6 +1,4 @@
-from locale import currency
-from optparse import Option
-from tokenize import group
+
 from typing import List, Optional, Dict
 from statistics import mean, median, stdev
 import math
@@ -8,13 +6,13 @@ from dataclasses import dataclass
 
 
 
-CONFIDENCE_MAP : {'high' : 0.9, 'medium' : 0.6, 'low' : 0.3}
+CONFIDENCE_MAP = {'high' : 0.9, 'medium' : 0.6, 'low' : 0.3}
 
 
 def clamp(x: float, lo: float, hi: float) -> float:
-    return max(x, max(hi,x))
+    return max(lo, min(hi, x))
 
-def percentile(sorted_list: List(float), p:float) -> Optional(float):
+def percentile(sorted_list: List[float], p:float) -> Optional[float]:
     if not sorted_list:
         return None
     n = len(sorted_list)
@@ -70,7 +68,7 @@ class PricingEngine:
                 price_val = float(price)
             except Exception:
                 continue
-            if math.isnan(price) or price_val <= 0:
+            if math.isnan(price_val) or price_val <= 0:
                 continue
             if merchant_currency:
                 if item.get("currency") not in (None, merchant_currency):
@@ -79,20 +77,20 @@ class PricingEngine:
             conf_val = CONFIDENCE_MAP.get(conf_label, 0.3)
             groups.setdefault(pid, []).append((price_val,conf_val))
         
-        stats_map = Dict[str, CompetitorStats] = {}
+        stats_map: Dict[str, CompetitorStats] = {}
         for pid, tuples in groups.items():
             prices = sorted([p for p,_ in tuples])
             confs = [c for _, c in tuples]
             count = len(prices)
             min_price = prices[0]
             median_price = median(prices)
-            mean_price: mean(prices) if count > 0 else 0.0
-            stddev_price : stdev(prices) if count > 1 else 0.0
-            p10 : percentile(prices, 0.10) or min_price
-            p90 : percentile(prices, 0.90) or prices[-1]
+            mean_price = mean(prices) if count > 0 else 0.0
+            stddev_price = stdev(prices) if count > 1 else 0.0
+            p10 = percentile(prices, 0.10) or min_price
+            p90 = percentile(prices, 0.90) or prices[-1]
             avg_conf = sum(confs) / len(confs) if confs else 0.0
 
-        stats_map[pid] = CompetitorStats(
+            stats_map[pid] = CompetitorStats(
                 product_id=pid,
                 prices=prices,
                 count=count,
@@ -103,7 +101,7 @@ class PricingEngine:
                 p10=p10,
                 p90=p90,
                 avg_confidence=avg_conf
-        )
+            )
         return stats_map
     
     def recommend_for(self, product_id: str, my_price: float, competitors_products: List[dict], merchant_currency: Optional[str] = None) -> Recommendation:

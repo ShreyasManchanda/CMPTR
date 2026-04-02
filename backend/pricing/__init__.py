@@ -1,8 +1,8 @@
-from .pricing_engine import PriceEngine, CompetitorStats, Recommendation
+from .pricing_engine import PricingEngine, CompetitorStats, Recommendation
 from .rules_agent import RulesAgent, FinalAction
 
 __all__ = [
-    "PriceEngine",
+    "PricingEngine",
     "CompetitorStats",
     "Recommendation",
     "RulesAgent",
