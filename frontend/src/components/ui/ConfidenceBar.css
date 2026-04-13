@@ -1,0 +1,42 @@
+.confidence-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.confidence-bar__track {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-surface-2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.confidence-bar__fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s ease-out;
+}
+
+.confidence-bar__fill--high {
+  background: var(--accent);
+}
+
+.confidence-bar__fill--medium {
+  background: var(--warning);
+}
+
+.confidence-bar__label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  min-width: 36px;
+  text-align: right;
+}
+
+.confidence-bar__label--high {
+  color: var(--accent);
+}
+
+.confidence-bar__label--medium {
+  color: var(--warning);
+}

@@ -35,8 +35,16 @@ class ProductNormalizer:
         "Rs": "INR",
         "£": "GBP",
         "€": "EUR",
+        "¥": "JPY",
+        "RMB": "CNY",
+        "元": "CNY",
+        "CN¥": "CNY",
+        "JP¥": "JPY",
+        "A$": "AUD",
         "AUD$": "AUD",
-        "CAD$": "CAD"
+        "C$": "CAD",
+        "CAD$": "CAD",
+        "CHF": "CHF"
     }
     
     _number_re = re.compile(r"[-+]?\d{1,3}(?:[,\d]*)(?:\.\d+)?")
@@ -93,8 +101,11 @@ class ProductNormalizer:
         return None
     
     def parse_currency_from_price(self, raw_price_str: Optional[str], fallback: Optional[str]) -> Optional[str]:
-        if fallback and isinstance(fallback,str) and len(fallback) <= 4:
-            return fallback.upper()
+        if fallback and isinstance(fallback, str):
+            fallback_upper = fallback.upper()
+            mapped = self.CURRENCY_SYMBOLS.get(fallback, self.CURRENCY_SYMBOLS.get(fallback_upper, fallback_upper))
+            if len(mapped) <= 4:
+                return mapped
 
         if not raw_price_str or not isinstance(raw_price_str, str):
             return None
@@ -103,8 +114,18 @@ class ProductNormalizer:
             if sym in raw_price_str:
                 return code
 
-        if re.search(r"\b(inr|rupees|rs\.)\b", raw_price_str, re.IGNORECASE):
+        if re.search(r"\b(inr|rupees|rs\.?)\b", raw_price_str, re.IGNORECASE):
             return "INR"
+        if re.search(r"\b(usd|dollars?)\b", raw_price_str, re.IGNORECASE):
+            return "USD"
+        if re.search(r"\b(eur|euros?)\b", raw_price_str, re.IGNORECASE):
+            return "EUR"
+        if re.search(r"\b(gbp|pounds?)\b", raw_price_str, re.IGNORECASE):
+            return "GBP"
+        if re.search(r"\b(jpy|yen)\b", raw_price_str, re.IGNORECASE):
+            return "JPY"
+        if re.search(r"\b(cny|rmb|yuan)\b", raw_price_str, re.IGNORECASE):
+            return "CNY"
 
         return None
 
@@ -233,7 +254,12 @@ class ProductNormalizer:
         if parsed["currency"] is None:
             diagnostics["notes"].append("currency_unknown")
 
-        parsed["image_url"] = raw.get("image_url")
+        raw_image_url = raw.get("image_url")
+        if isinstance(raw_image_url, list):
+            parsed["image_url"] = raw_image_url[0] if raw_image_url else None
+        else:
+            parsed["image_url"] = raw_image_url
+        
         parsed["stock_status"] = self.map_stock_status(raw.get("stock_status"))
         parsed["source"] = raw.get("source") or "unknown"
 

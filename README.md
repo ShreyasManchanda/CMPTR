@@ -5,179 +5,137 @@
 **Crawls e-commerce stores, resolves ambiguous market signals with multi-agent reasoning, and generates actionable pricing insights — fully automated.**
 
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![CrewAI](https://img.shields.io/badge/CrewAI-Multi--Agent-000000?style=flat-square)](https://crewai.com)
 [![Gemini](https://img.shields.io/badge/Gemini-LLM-4285F4?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev)
-[![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
 </div>
 
 ---
 
-## What it does
+## What It Does
 
-Most pricing tools give you raw competitor data and leave interpretation to you. CMPT* goes further: it uses a **CrewAI multi-agent pipeline** to reason about that data — flagging pricing anomalies, resolving ambiguous signals (Is this a sale? A new baseline? A loss-leader?), and generating structured insights a pricing team can act on immediately.
+Most pricing tools give you raw competitor data and leave interpretation to you. **CMPT\*** goes further: it uses a **CrewAI multi-agent pipeline** to reason about that data — flagging pricing anomalies, resolving ambiguous signals (*Is this a sale? A new baseline? A loss-leader?*), and generating structured insights a pricing team can act on immediately.
 
-You plug in a product category. The system crawls competitor listings, normalises the pricing data across inconsistent formats, passes it through an LLM-powered analysis layer, and returns a report with recommended pricing actions.
+You paste a product URL and competitor store links. The system crawls competitor listings, normalises the pricing data across inconsistent formats, passes it through a deterministic pricing engine + LLM explanation layer, and returns a report with a **recommended action, confidence score, and plain-language explanation**.
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        CMPT* Pipeline                        │
-│                                                             │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
-│  │   Crawler    │───▶│  Normaliser  │───▶│  CrewAI      │  │
-│  │  (e-commerce │    │  (pricing    │    │  Agents      │  │
-│  │   stores)    │    │   data)      │    │              │  │
-│  └──────────────┘    └──────────────┘    └──────┬───────┘  │
-│                                                  │          │
-│                              ┌───────────────────┼────────┐ │
-│                              │    Agent Network  │        │ │
-│                              │                   ▼        │ │
-│                              │  ┌─────────────────────┐  │ │
-│                              │  │  Signal Resolver    │  │ │
-│                              │  │  (Gemini LLM)       │  │ │
-│                              │  └──────────┬──────────┘  │ │
-│                              │             ▼             │ │
-│                              │  ┌─────────────────────┐  │ │
-│                              │  │  Pricing Analyst    │  │ │
-│                              │  │  (rule engine +     │  │ │
-│                              │  │   LLM reasoning)    │  │ │
-│                              │  └──────────┬──────────┘  │ │
-│                              └─────────────┼─────────────┘ │
-│                                            ▼               │
-│                              ┌─────────────────────────┐   │
-│                              │    FastAPI REST Layer    │   │
-│                              │    + Insight Report      │   │
-│                              └─────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           CMPT* Full-Stack                                  │
+│                                                                             │
+│    ┌──────────────────────────────────────────────────────────────────┐     │
+│    │  FRONTEND  (React 18 + Vite)                                     │     │
+│    │  ┌──────────┐  ┌────────────┐  ┌──────────────────────────────┐ │     │
+│    │  │ Landing  │  │   Login    │  │      Dashboard               │ │     │
+│    │  │  Page    │  │   Page     │  │  (React Query + Axios)       │ │     │
+│    │  └──────────┘  └────────────┘  └──────────┬───────────────────┘ │     │
+│    └───────────────────────────────────────────┼──────────────────────┘     │
+│                                                │ REST API (JSON)            │
+│    ┌───────────────────────────────────────────┼──────────────────────┐     │
+│    │  BACKEND  (FastAPI + PostgreSQL)          │                      │     │
+│    │                                           ▼                      │     │
+│    │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐           │     │
+│    │  │   Crawler    │─▶│  Normaliser  │─▶│  Pricing     │           │     │
+│    │  │  (Firecrawl) │  │  (rules)     │  │  Engine      │           │     │
+│    │  └──────────────┘  └──────────────┘  └──────┬───────┘           │     │
+│    │                                             │                    │     │
+│    │                      ┌──────────────────────┼──────────┐        │     │
+│    │                      │   AI Agent Network   │          │        │     │
+│    │                      │                      ▼          │        │     │
+│    │                      │  ┌──────────────────────────┐   │        │     │
+│    │                      │  │  Ambiguity Agent         │   │        │     │
+│    │                      │  │  (Gemini LLM)            │   │        │     │
+│    │                      │  └────────────┬─────────────┘   │        │     │
+│    │                      │               ▼                 │        │     │
+│    │                      │  ┌──────────────────────────┐   │        │     │
+│    │                      │  │  Explanation Agent       │   │        │     │
+│    │                      │  │  (Always Active)         │   │        │     │
+│    │                      │  └──────────────────────────┘   │        │     │
+│    │                      └─────────────────────────────────┘        │     │
+│    └─────────────────────────────────────────────────────────────────┘     │
+│ └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Agent roles:**
-- **Crawler Agent** — discovers and scrapes competitor product listings
-- **Normalisation Agent** — resolves inconsistent pricing formats, currency, bundle vs unit pricing
-- **Signal Resolver** — uses Gemini LLM to classify ambiguous pricing moves (sale vs permanent drop vs promotional)
-- **Pricing Analyst** — applies a rule-based volatility engine + LLM reasoning to generate recommended actions
+### Pipeline Stages
 
----
-
-## Results
-
-| Metric | Value |
-|---|---|
-| Market signal ambiguity resolution | Automated via LLM — previously manual |
-| Pricing report generation | End-to-end, no human-in-the-loop |
-| Deployment | Production-ready REST API |
-
----
-
-## Tech Stack
-
-- **Agent orchestration**: CrewAI
-- **LLM**: Google Gemini
-- **Web crawling**: BeautifulSoup / Playwright
-- **API**: FastAPI
-- **Language**: Python 3.11
+| # | Stage | Description |
+|---|---|---|
+| 1 | **Crawler** | Accumulates product links from competitor store domains (capped to 5 per store) |
+| 2 | **Scraper** | Extracts data via JSON-LD or **Markdown Fallback** (optimized for "Add to Bag") |
+| 3 | **Normalise** | Automated currency conversion via **Frankfurter API** + symbol aliases |
+| 4 | **Price** | Deterministic engine calculates market median and volatility position |
+| 5 | **Rules** | Policy rules gate the recommendation (confidence/sample size thresholds) |
+| 6 | **Ambiguity AI** | LLM resolves ambiguous store signals if the recommendation is `manual_review` |
+| 7 | **Explanation AI** | **Always active.** Generates human-readable context for every recommendation |
 
 ---
 
 ## Quickstart
 
 ### Prerequisites
-- Python 3.11+
-- Gemini API key
 
-### Run locally
+- **Python 3.11+** and **Node.js 18+**
+- **Docker** (optional but recommended)
+- API keys: **Gemini** and **Firecrawl**
+
+### 1. Clone & Configure
 
 ```bash
-git clone https://github.com/ShreyasManchanda/CMPT
+git clone https://github.com/ShreyasManchanda/CMPT.git
 cd CMPT
-pip install -r requirements.txt
-cp .env.example .env          # add your GEMINI_API_KEY
-uvicorn app.main:app --reload
+```
+
+Set up your `.env`:
+```env
+FIRECRAWL_API_KEY=your_key
+GEMINI_API_KEY=your_key
+DATABASE_URL=postgresql://postgres:1234@localhost:5432/cmpt_db
+```
+
+### 2. Start with Docker
+
+```bash
+docker compose up -d
+```
+
+The system will start PostgreSQL and the FastAPI backend. Use the **init retry loop** logic to ensure a stable connection even if Postgres boots slowly.
+
+### 3. Run Tests
+
+The test suite is unified and should be run from the `backend/` directory:
+
+```bash
+# Core logic & Math
+python tests/test_pipeline.py
+
+# Live Scraping & Crawling
+python tests/test_scraper.py
+
+# AI Agent Reasoning
+python tests/test_agents.py
 ```
 
 ---
 
-## API Usage
+## API Endpoints
 
-```bash
-# Trigger a pricing analysis run
-curl -X POST http://localhost:8000/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"category": "wireless earbuds", "competitor_urls": ["..."]}'
-```
+### `POST /analyze`
+Triggers an end-to-end pricing analysis.
 
-Response:
+**Request:**
 ```json
 {
-  "status": "complete",
-  "signals_resolved": 14,
-  "recommended_actions": [
-    {
-      "action": "hold",
-      "reasoning": "Competitor drop is a flash sale — 72h pattern detected",
-      "confidence": 0.87
-    }
-  ]
+  "product_url": "https://yourstore.com/p/1",
+  "competitor_urls": ["https://competitor.com"],
+  "// Aliases": "my_product_url and competitor_store_urls also supported"
 }
 ```
-
----
-
-## Demo
-
-> 📸 *Demo GIF coming soon — recording a full end-to-end analysis run.*
-
-**What to expect:** Input a product category → watch the agent pipeline crawl, normalise, and reason → receive a structured pricing insight report.
-
----
-
-## What to record for the demo GIF
-
----
-
-## Project Structure
-
-```
-CMPTR/
-├── backend/
-│   ├── agent/
-│   │   ├── ambiguity_agent.py
-│   │   ├── explanation_agent.py
-│   │   └── __init__.py
-│   ├── config/
-│   │   ├── agents.yaml
-│   │   ├── config_loader.py
-│   │   └── __init__.py
-│   ├── normalizer/
-│   │   ├── normalize_product.py
-│   │   └── __init__.py
-│   ├── pricing/
-│   │   ├── pricing_engine.py
-│   │   ├── rules_agent.py
-│   │   └── __init__.py
-│   ├── scraper/
-│   │   ├── crawler.py
-│   │   ├── scraper.py
-│   │   └── __init__.py
-│   └── utils/
-├── .gitignore
-├── LICENSE
-└── README.md
-```
-
----
-
-## Roadmap
-
-- [ ] Implementing Dockerfile for the code (Under Progress)
-- [ ] Dashboard UI for pricing trends over time
-- [ ] Slack/email alerting for significant competitor moves
-
 
 ---
 

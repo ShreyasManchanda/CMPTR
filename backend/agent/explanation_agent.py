@@ -1,24 +1,11 @@
-from doctest import debug_script
-import os
 from crewai import Agent, Crew, Process, Task, LLM
-from config import load_agents_config
 import json
 from typing import Dict, Any, Optional, List
-from dotenv import load_dotenv
-import logging
+from utils.agent_setup import setup_agent_logging, setup_agent_environment, get_agent_config
 
-
-logger = logging.getLogger("explanation_agent_direct")
-if not logger.handlers:
-    logging.basicConfig(level=logging.INFO)
-
-
-
-load_dotenv()
-os.environ['GEMINI_API_KEY'] = os.getenv('GEMINI_API_KEY')
-
-llm_config = load_agents_config()
-agents_config = llm_config['explanation-agent']
+logger = setup_agent_logging("explanation_agent")
+setup_agent_environment()
+agents_config = get_agent_config('explanation-agent')
 
 
 

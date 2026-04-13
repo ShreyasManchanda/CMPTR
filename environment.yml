@@ -12,6 +12,7 @@ dependencies:
       - psycopg2-binary>=2.9.0
       - pydantic>=2.0.0
       - python-dotenv>=1.0.0
-      - crewai>=0.1.0
-      - firecrawl-py>=0.0.1  # Firecrawl Python SDK
+      - "crewai[google-genai]>=0.1.0"
+      - firecrawl-py>=0.0.1
       - pyyaml>=6.0
+      - requests>=2.31.0

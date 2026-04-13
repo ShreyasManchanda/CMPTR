@@ -1,11 +1,13 @@
 import logging
 from typing import List, Dict, Any
 from dataclasses import asdict
+from urllib.parse import urlparse
+from datetime import datetime
 
 from scraper.crawler import Crawler
 from scraper.scraper import Scraper
 from normalizer.normalize_product import ProductNormalizer, NormalizedProduct
-from pricing.pricing_engine import PricingEngine, Recommendation
+from pricing.pricing_engine import PricingEngine, Recommendation, CONFIDENCE_MAP
 from pricing.rules_agent import RulesAgent, FinalAction
 from agent.ambiguity_agent import AmbiguityAgent
 from agent.explanation_agent import ExplanationAgent
@@ -45,19 +47,29 @@ class PricingOrchestrator:
         my_price = norm_my_product.current_price
         product_id = norm_my_product.product_id
         merchant_currency = norm_my_product.currency
+        product_name = norm_my_product.product_name or product_id
 
-        logger.info(f"Target product identified: ID={product_id}, Price={my_price} {merchant_currency}")
+        logger.info(f"Target product identified: Name='{product_name}', ID={product_id}, Price={my_price} {merchant_currency}")
 
         # --- PHASE 2: Collect Market Data (The Loop) ---
         all_competitor_raw_data = []
         overall_scrape_stats = []
 
+        MAX_TOTAL_SCRAPES = 15
+        max_per_domain = max(1, MAX_TOTAL_SCRAPES // len(competitor_store_urls))
+        # Cap to 5 maximum per store, so if only 1 competitor is passed, it doesn't scrape 15 times from them
+        max_per_domain = min(max_per_domain, 5)
+
         for store_url in competitor_store_urls:
-            logger.info(f"Crawling competitor store: {store_url}")
-            links = self.crawler.crawl_website(store_url)
+            domain = urlparse(store_url).netloc or store_url
+            # Clean up trailing slashes or subpaths in case they passed raw URLs
+            domain = domain.split('/')[0]
+
+            logger.info(f"Searching competitor store '{domain}' for '{product_name}' (cap: {max_per_domain})")
+            links = self.crawler.find_competitor_product(domain, product_name, max_results=max_per_domain)
             
             if not links:
-                logger.warning(f"No product links found on {store_url}")
+                logger.warning(f"No product links found on {domain}")
                 continue
                 
             logger.info(f"Batch scraping {len(links)} products from {store_url}")
@@ -80,11 +92,20 @@ class PricingOrchestrator:
         # --- PHASE 3: Normalize Everything ---
         logger.info(f"Normalizing {len(all_competitor_raw_data)} competitor products.")
         normalized_competitors, norm_metrics = self.normalizer.normalize_batch(all_competitor_raw_data)
+        logger.info(f"Normalization complete: {norm_metrics['normalized_count']} survived, {norm_metrics['dropped_count']} dropped. Reasons: {norm_metrics.get('drop_reasons', {})}")
+        for comp in normalized_competitors:
+            logger.info(f"  Competitor: {comp.product_name} | {comp.current_price} {comp.currency} | confidence={comp.scrape_confidence}")
 
         # --- PHASE 4: Deterministic Pricing Math ---
-        # The engine expects a list of dicts. We convert Pydantic objects using .model_dump() / .dict()
+        # The engine expects a list of dicts. We convert Pydantic objects using .dict()
         competitor_dicts = [p.dict() for p in normalized_competitors]
         
+        # FIX: The competitor objects have their own derived product_ids from their URLs.
+        # But PricingEngine.recommend_for groups them by the target product_id.
+        # We must align all competitor data points to the target product_id before aggregating.
+        for comp in competitor_dicts:
+            comp["product_id"] = product_id
+
         recommendation: Recommendation = self.engine.recommend_for(
             product_id=product_id,
             my_price=my_price,
@@ -115,6 +136,32 @@ class PricingOrchestrator:
         ))
 
         # --- Return Final Payload ---
+        # Build per-competitor detail array for the frontend table
+        # Convert prices to merchant currency so the frontend displays consistent values
+        from pricing.pricing_engine import fetch_live_exchange_rates
+        exchange_rates = fetch_live_exchange_rates()
+
+        competitor_details = []
+        for comp in normalized_competitors:
+            display_price = comp.current_price
+            # Convert to merchant currency if needed
+            if comp.currency and merchant_currency and comp.currency != merchant_currency:
+                rate_from = exchange_rates.get(comp.currency)
+                rate_to = exchange_rates.get(merchant_currency)
+                if rate_from and rate_to and display_price:
+                    display_price = round(display_price * (rate_to / rate_from), 2)
+
+            competitor_details.append({
+                "store": urlparse(comp.product_url).netloc if comp.product_url else "unknown",
+                "product_name": comp.product_name or "Unknown Product",
+                "price": display_price,
+                "original_price": comp.current_price,
+                "original_currency": comp.currency,
+                "stock_status": comp.stock_status,
+                "confidence": CONFIDENCE_MAP.get((comp.scrape_confidence or "low").lower(), 0.3),
+                "scraped_at": comp.scraped_at.isoformat() if comp.scraped_at else datetime.utcnow().isoformat(),
+            })
+
         return {
             "status": "success",
             "product_id": product_id,
@@ -131,6 +178,7 @@ class PricingOrchestrator:
             "metrics": {
                 "scrape_stats": overall_scrape_stats,
                 "normalization": norm_metrics,
-                "competitor_stats": asdict(recommendation.stats) if recommendation.stats else None
+                "competitor_stats": competitor_details,
+                "aggregated_stats": asdict(recommendation.stats) if recommendation.stats else None
             }
         }

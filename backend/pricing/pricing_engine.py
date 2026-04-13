@@ -1,9 +1,36 @@
-
+import requests
+import logging
+from functools import lru_cache
 from typing import List, Optional, Dict
 from statistics import mean, median, stdev
 import math
 from dataclasses import dataclass
 
+logger = logging.getLogger(__name__)
+
+@lru_cache(maxsize=1)
+def fetch_live_exchange_rates() -> dict:
+    fallback = {
+        "USD": 1.0,
+        "EUR": 0.90,
+        "GBP": 0.75,
+        "INR": 83.00,
+        "CAD": 1.35,
+        "AUD": 1.50,
+        "JPY": 150.00,
+        "CNY": 7.20
+    }
+    try:
+        response = requests.get("https://api.frankfurter.app/latest?from=USD", timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            rates = data.get("rates", {})
+            rates["USD"] = 1.0
+            logger.info("Successfully fetched live exchange rates from frankfurter.")
+            return rates
+    except Exception as e:
+        logger.error(f"Failed to fetch exchange rates, using fallback: {e}")
+    return fallback
 
 
 CONFIDENCE_MAP = {'high' : 0.9, 'medium' : 0.6, 'low' : 0.3}
@@ -17,7 +44,6 @@ def percentile(sorted_list: List[float], p:float) -> Optional[float]:
         return None
     n = len(sorted_list)
     idx = int(round(p * (n - 1)))
-    idx = max(0, min(idx, n - 1))
     idx = max(0, min(idx, n - 1))
     return sorted_list[idx]
 
@@ -48,9 +74,9 @@ class Recommendation:
 
 class PricingEngine:
     def __init__(self,
-    min_sample_size: int = 4,
+    min_sample_size: int = 1,
     min_avg_confidence: float = 0.6,
-    volatiity_threshold: float = 0.25
+    volatiity_threshold: float = 0.80 # Tripled to allow varied clearance pricing
     ):
         self.min_sample_size = min_sample_size
         self.min_avg_confidence = min_avg_confidence
@@ -58,6 +84,9 @@ class PricingEngine:
 
     def aggregate_competitors(self, normalized_products: List[dict],
     merchant_currency: Optional[str] = None) -> Dict[str, CompetitorStats]:
+        
+        exchange_rates = fetch_live_exchange_rates()
+
         groups: Dict[str, List[tuple]] = {}
         for item in normalized_products:
             pid = item.get("product_id")
@@ -70,9 +99,18 @@ class PricingEngine:
                 continue
             if math.isnan(price_val) or price_val <= 0:
                 continue
-            if merchant_currency:
-                if item.get("currency") not in (None, merchant_currency):
+            
+            item_currency = item.get("currency")
+            if merchant_currency and item_currency and item_currency != merchant_currency:
+                rate_from = exchange_rates.get(item_currency)
+                rate_to = exchange_rates.get(merchant_currency)
+                if rate_from and rate_to:
+                    # Item price gives USD when divided by its rate, then multiplied by target rate
+                    price_val = price_val * (rate_to / rate_from)
+                elif item_currency != merchant_currency:
+                    # Ignore if conversion rates are missing
                     continue
+
             conf_label = (item.get("scrape_confidence") or "low").lower()
             conf_val = CONFIDENCE_MAP.get(conf_label, 0.3)
             groups.setdefault(pid, []).append((price_val,conf_val))
@@ -130,8 +168,9 @@ class PricingEngine:
             return Recommendation(product_id, my_price_val, None, "manual_review",
                                   "invalid_median", stats.avg_confidence, stats)
 
-        volatility_ratio = stats.stddev_price / median_price
-        if volatility_ratio > self.volatility_threshold:
+        volatility_ratio = stats.stddev_price / median_price if median_price > 0 else 0
+        # Only enforce volatility gate when we have enough data points for stddev to be meaningful
+        if stats.count >= 3 and volatility_ratio > self.volatility_threshold:
             return Recommendation(product_id, my_price_val, None, "manual_review",
                                   "high_volatility", stats.avg_confidence, stats)
         
@@ -158,8 +197,10 @@ class PricingEngine:
             else:
                 suggested = max(stats.min_price, median_price*0.98)
 
-            vol_penalty = clamp(1.0 - volatility_ratio, 0.5, 1.0)
-            sample_boost = clamp(stats.count / (self.min_sample_size * 2), 0.5, 1.0)
+            # Softer volatility penalty for apparel/clearance pricing:
+            vol_penalty = clamp(1.0 - (volatility_ratio * 0.4), 0.7, 1.0)
+            # Gentler curve: 1 sample=0.7, 2=0.85, 3+=1.0
+            sample_boost = clamp(0.55 + (stats.count * 0.15), 0.7, 1.0)
             rec_conf = stats.avg_confidence * vol_penalty * sample_boost
             rec_conf = clamp(rec_conf, 0.0, 1.0)
 
@@ -174,8 +215,10 @@ class PricingEngine:
                 stats=stats
             )
 
-        vol_penalty = clamp(1.0 - volatility_ratio, 0.5, 1.0)
-        sample_boost = clamp(stats.count / (self.min_sample_size * 2), 0.5, 1.0)
+        # Softer volatility penalty for apparel/clearance pricing:
+        vol_penalty = clamp(1.0 - (volatility_ratio * 0.4), 0.7, 1.0)
+        # Gentler curve: 1 sample=0.7, 2=0.85, 3+=1.0
+        sample_boost = clamp(0.55 + (stats.count * 0.15), 0.7, 1.0)
         rec_conf = stats.avg_confidence * vol_penalty * sample_boost
         rec_conf = clamp(rec_conf, 0.0, 1.0)
 

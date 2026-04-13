@@ -48,6 +48,24 @@ coverage.xml
 *.cover
 *.py,cover
 .hypothesis/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
 .pytest_cache/
 cover/
 
@@ -180,3 +198,8 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 .dockerignore
+
+# Frontend
+node_modules/
+frontend/.env
+frontend/dist/

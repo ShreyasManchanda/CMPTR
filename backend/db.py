@@ -1,14 +1,35 @@
 import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, Column, Integer, String, Float, Text, DateTime
 from sqlalchemy.orm import sessionmaker, declarative_base
 from datetime import datetime
 
+# Load .env file from the parent directory
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+
+import time
+from sqlalchemy.exc import OperationalError
 
 # --- STEP 1: Connection Setup ---
 DATABASE_URL = os.getenv("DATABASE_URL")
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
+
+def get_engine_with_retry(url, max_retries=5, delay=3):
+    """Wait for the database to be ready before giving up."""
+    for i in range(max_retries):
+        try:
+            temp_engine = create_engine(url)
+            # Try a simple connection check
+            with temp_engine.connect() as conn:
+                return temp_engine
+        except OperationalError:
+            if i == max_retries - 1:
+                raise
+            print(f"Database not ready yet... retrying in {delay}s ({i+1}/{max_retries})")
+            time.sleep(delay)
+
+engine = get_engine_with_retry(DATABASE_URL)
+SessionLocal = sessionmaker(bind=engine)
 
 
 # --- STEP 2: Table Definitions ---

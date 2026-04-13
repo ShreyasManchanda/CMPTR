@@ -1,0 +1,43 @@
+.explanation-panel {
+  background: var(--bg-surface-1);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  height: 100%;
+}
+
+.explanation-panel__header {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.explanation-panel__header::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(22, 255, 177, 0.4);
+}
+
+/* Specific markdown adjustments for the panel */
+.markdown-content {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+.markdown-content p {
+  margin-bottom: 12px;
+}
+.markdown-content strong {
+  margin-right: 4px; /* Space out bold phrases slightly. */
+}

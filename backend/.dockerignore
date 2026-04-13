@@ -66,3 +66,9 @@ coverage.xml
 # Logs
 logs/
 *.log
+
+# Project Specific
+tests/
+frontend/
+.env
+backend/.env

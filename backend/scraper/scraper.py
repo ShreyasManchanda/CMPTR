@@ -1,6 +1,6 @@
 from typing import List
 import os
-from firecrawl import Firecrawl
+from firecrawl import FirecrawlApp
 from urllib.parse import urlparse, urlunparse
 from datetime import datetime
 
@@ -14,7 +14,7 @@ class Scraper():
         if not api_key:
             raise RuntimeError("FIRECRAWL API KEY not set")
 
-        self.firecrawl = Firecrawl(api_key)
+        self.firecrawl = FirecrawlApp(api_key=api_key)
 
     def scrape_product(self, product_url : str) -> dict:
         product = {
@@ -31,12 +31,18 @@ class Scraper():
         }
 
         try:
-            result = self.firecrawl.scrape(product_url)
+            # scrape_url returns a dict in the current SDK
+            result = self.firecrawl.scrape_url(product_url)
         except Exception:
             return product
         
         if not result:
             return product
+
+        if hasattr(result, "model_dump"):
+            result = result.model_dump()
+        elif hasattr(result, "dict"):
+            result = result.dict()
 
         # --- preferred path: structured data (JSON-LD) ---
         structured = result.get("structured_data")
@@ -62,14 +68,69 @@ class Scraper():
             product["source"] = "json_ld"
             return product
 
-        # --- fallback path: weak HTML/text signals ---
-        text = (result.get("text") or "").lower()
+        # --- secondary path: OpenGraph Metadata ---
+        metadata = result.get("metadata", {})
+        if metadata and metadata.get("og:price:amount"):
+            product["product_name"] = metadata.get("og:title")
+            product["scrape_confidence"] = "high"
+            try:
+                product["current_price"] = float(metadata.get("og:price:amount"))
+            except ValueError:
+                pass
+            product["currency"] = metadata.get("og:price:currency")
+            product["image_url"] = metadata.get("og:image")
 
-        if "out of stock" in text:
+            product["stock_status"] = "unknown"
+            text = (result.get("markdown") or "").lower()
+            if "add to cart" in text or "add to bag" in text or "in stock" in text:
+                product["stock_status"] = "in_stock"
+            elif "out of stock" in text or "sold out" in text:
+                product["stock_status"] = "out_of_stock"
+
+            product["source"] = "opengraph"
+            return product
+
+        # --- fallback path: weak HTML/text signals ---
+        text = (result.get("markdown") or result.get("text") or "")
+        metadata = result.get("metadata", {})
+        
+        # Salvage title and image from metadata even if price isn't in OpenGraph
+        if metadata:
+            product["product_name"] = metadata.get("og:title") or metadata.get("title")
+            product["image_url"] = metadata.get("og:image") or metadata.get("image")
+            
+        # We process lowercase for stock status
+        text_lower = text.lower()
+        # Prioritize positive signals since "Out of stock policy" often sits in the footer
+        if "add to cart" in text_lower or "add to bag" in text_lower or "in stock" in text_lower:
+            product["stock_status"] = "in_stock"
+        elif "out of stock" in text_lower or "sold out" in text_lower:
             product["stock_status"] = "out_of_stock"
 
-        product["source"] = "html"
-        product["scrape_confidence"] = "medium"
+        import re
+        if product["current_price"] is None and text:
+            # Look for the first price-like string: $88, £50.00, €45, Rs.500, ¥1500, 15.00 USD, USD 15.00
+            # Capture the symbol/code in group 1, 3, or 5, and the value in group 2, 4, or 6
+            price_match = re.search(r'(?:CA|AU|US)?([\$£€¥₹])\s*([\d,]+(?:\.\d{2})?)|(USD|EUR|GBP|INR|CAD|AUD)\s+([\d,]+(?:\.\d{2})?)|([\d,]+(?:\.\d{2})?)\s*(USD|EUR|GBP|INR|CAD|AUD)', text, re.IGNORECASE)
+            if price_match:
+                # Group mapping: (1,2) symbol before, (3,4) code before, (6,5) code after
+                sym = price_match.group(1) or price_match.group(3) or price_match.group(6)
+                val_str = price_match.group(2) or price_match.group(4) or price_match.group(5)
+                if val_str:
+                    val_str = val_str.replace(',', '')
+                    try:
+                        product["current_price"] = float(val_str)
+                        if sym:
+                            product["currency"] = sym.upper()
+                    except ValueError:
+                        pass
+
+        if product.get("current_price") is not None:
+            product["source"] = "markdown_fallback"
+            product["scrape_confidence"] = "medium"  # Bump to medium so it survives the normalizer
+        else:
+            product["source"] = "html"
+            product["scrape_confidence"] = "low"
 
         return product
 
@@ -78,9 +139,9 @@ class Scraper():
         for url in urls:
             if not url:
                 continue
-            if "/products/" not in url:
-                continue
-            if any(x in url for x in [".json", "/cart", "/search"]):
+            # Note: Removed the '/products/' filter to allow intelligent search matches from any route.
+            # But still skip known non-product pages.
+            if any(x in url for x in [".json", "/cart", "/search", "/collections/"]):
                 continue
             parsed = urlparse(url)
             normalized = urlunparse(

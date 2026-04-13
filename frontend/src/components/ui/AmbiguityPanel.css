@@ -1,0 +1,17 @@
+.ambiguity-panel {
+  background: var(--bg-surface-1);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-4);
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.ambiguity-panel__header {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--warning);
+  margin-bottom: var(--space-2);
+}

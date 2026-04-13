@@ -1,0 +1,167 @@
+.rec-hero {
+  background: var(--bg-surface-1);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-card);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.rec-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top, var(--action-color) 0%, transparent 80%);
+  opacity: 0.03;
+  pointer-events: none;
+}
+
+.rec-hero__inner {
+  padding: var(--space-8);
+  position: relative;
+  z-index: 1;
+}
+
+/* TOP ROW */
+.rec-hero__top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* Align the top of massive text to massive numbers */
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  padding-bottom: var(--space-5);
+}
+
+.rec-hero__action-text {
+  font-family: var(--font-sans);
+  font-size: 64px;
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.rec-hero__action-text div {
+  margin: 0;
+  padding: 0;
+}
+
+.rec-hero__price-block {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.rec-hero__suggested {
+  display: flex;
+  align-items: baseline;
+  line-height: 0.85; /* Tighten the number's box so it aligns exactly at the font baseline */
+  margin-bottom: var(--space-3);
+}
+
+.rec-hero__currency {
+  font-size: 40px;
+  font-weight: 400;
+  margin-right: 8px;
+  opacity: 0.8;
+}
+
+.rec-hero__value {
+  font-family: var(--font-sans);
+  font-size: 110px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.rec-hero__current {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rec-hero__current-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rec-hero__current-val {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  color: var(--text-secondary);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* BOTTOM ROW */
+.rec-hero__bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-8);
+  align-items: center;
+}
+
+.rec-hero__reason {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  text-align: left;
+}
+
+.rec-hero__confidence-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.rec-hero__conf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.rec-hero__conf-label {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.rec-hero__conf-val {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 850px) {
+  .rec-hero__top-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-6);
+  }
+  .rec-hero__price-block {
+    text-align: left;
+    align-items: flex-start;
+  }
+  .rec-hero__bottom-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+  .rec-hero__action-text {
+    font-size: 48px;
+  }
+  .rec-hero__value {
+    font-size: 80px;
+  }
+  .rec-hero__currency {
+    font-size: 32px;
+  }
+}
