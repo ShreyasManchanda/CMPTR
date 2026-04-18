@@ -3,49 +3,50 @@
    ============================================ */
 
 /* --- Google Fonts --- */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
-/* --- CSS Custom Properties --- */
+/* --- CSS Custom Properties (PRD §2 tokens) --- */
 :root {
   /* Backgrounds */
-  --bg-base: #08090b;
-  --bg-surface-1: #111214;
-  --bg-surface-2: #1a1b1f;
+  --bg-base: #050505;
+  --bg-surface-1: #0A0A0A;
+  --bg-surface-2: #121212;
 
   /* Borders */
-  --border: rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(255, 255, 255, 0.12);
+  --border: rgba(255,255,255,0.06);
+  --border-hover: rgba(255,255,255,0.12);
+  --border-glow: rgba(52,211,153,0.15);
 
   /* Text */
-  --text-primary: #f0f0f0;
-  --text-secondary: #71717a;
+  --text-primary: #FAFAFA;
+  --text-secondary: #A1A1AA;
 
-  /* Accent — Saturated Mint */
-  --accent: #16ffb1;
-  --accent-muted: rgba(22, 255, 177, 0.10);
-  --accent-dim: #0de09a;
-  --accent-glow: rgba(22, 255, 177, 0.15);
-  --accent-glow-strong: rgba(22, 255, 177, 0.25);
+  /* Accent */
+  --accent: #10B981;
+  --accent-dim: #059669;
+  --accent-muted: rgba(16,185,129,0.08);
+  --accent-glow: rgba(16,185,129,0.25);
+  --accent-glow-strong: rgba(16,185,129,0.4);
 
   /* Semantic */
-  --error: #f87171;
-  --warning: #fbbf24;
+  --error: #EF4444;
+  --warning: #F59E0B;
 
   /* Glass */
-  --glass-bg: rgba(14, 15, 18, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-bg-strong: rgba(14, 15, 18, 0.80);
+  --glass-bg: rgba(10,10,10,0.6);
+  --glass-border: rgba(255,255,255,0.08);
+  --glass-bg-strong: rgba(10,10,10,0.8);
 
   /* Shadows */
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--border);
-  --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 60px rgba(22, 255, 177, 0.08);
-  --shadow-navbar: 0 4px 30px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--glass-border);
+  --shadow-card: inset 0 1px 0 rgba(255,255,255,0.05);
+  --shadow-elevated: 0 8px 32px rgba(0,0,0,0.6);
+  --shadow-glow: 0 0 32px -8px var(--accent-glow);
+  --shadow-navbar: 0 4px 24px rgba(0,0,0,0.5);
 
   /* Typography families */
   --font-serif: 'Playfair Display', serif;
-  --font-sans: 'DM Sans', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Geist Mono', 'JetBrains Mono', monospace;
 
   /* Spacing base (8px grid) */
   --space-1: 8px;
@@ -57,11 +58,11 @@
   --space-12: 96px;
   --space-16: 128px;
 
-  /* Radius */
-  --radius-card: 12px;
+  /* Radius (PRD §2.4) */
+  --radius-card: 16px;
   --radius-btn: 8px;
   --radius-pill: 999px;
-  --radius-input: 8px;
+  --radius-input: 12px;
   --radius-navbar: 16px;
 }
 
@@ -149,12 +150,6 @@ img { max-width: 100%; display: block; }
   100% { background-position: 200% 0; }
 }
 
-@keyframes fadeCycle {
-  0%, 10% { opacity: 0; }
-  15%, 85% { opacity: 1; }
-  90%, 100% { opacity: 0; }
-}
-
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -165,46 +160,13 @@ img { max-width: 100%; display: block; }
   to { transform: rotate(360deg); }
 }
 
-@keyframes chipPop {
-  0% { transform: scale(0.95); }
-  100% { transform: scale(1); }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-}
-
-@keyframes glowPulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
-}
-
-@keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-30px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(30px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
 @keyframes gradientShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
-/* --- Scroll reveal utility --- */
-/* Note: directional variants (.reveal--up, --left, --right) and delay
-   classes (.reveal-d1 etc.) are in LandingPage.css for page-specific tuning.
-   This is the global fallback for any page that uses Reveal without direction. */
+/* Scroll reveal (directional variants and delay classes are in LandingPage.css) */
 .reveal {
   opacity: 0;
   transform: translateY(28px);

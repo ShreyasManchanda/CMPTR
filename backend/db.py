@@ -1,26 +1,24 @@
 import os
+import time
+
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, Column, Integer, String, Float, Text, DateTime
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker, declarative_base
 from datetime import datetime
 
-# Load .env file from the parent directory
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
-import time
-from sqlalchemy.exc import OperationalError
-
-# --- STEP 1: Connection Setup ---
 DATABASE_URL = os.getenv("DATABASE_URL")
 Base = declarative_base()
 
-def get_engine_with_retry(url, max_retries=5, delay=3):
+
+def get_engine_with_retry(url: str, max_retries: int = 5, delay: int = 3):
     """Wait for the database to be ready before giving up."""
     for i in range(max_retries):
         try:
             temp_engine = create_engine(url)
-            # Try a simple connection check
-            with temp_engine.connect() as conn:
+            with temp_engine.connect():
                 return temp_engine
         except OperationalError:
             if i == max_retries - 1:
@@ -28,11 +26,10 @@ def get_engine_with_retry(url, max_retries=5, delay=3):
             print(f"Database not ready yet... retrying in {delay}s ({i+1}/{max_retries})")
             time.sleep(delay)
 
+
 engine = get_engine_with_retry(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 
-
-# --- STEP 2: Table Definitions ---
 
 class MerchantProduct(Base):
     __tablename__ = "merchant_products"
@@ -72,6 +69,5 @@ class PricingDecision(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
-# --- STEP 3: Table Creator ---
 def init_db():
     Base.metadata.create_all(bind=engine)

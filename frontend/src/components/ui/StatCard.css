@@ -11,8 +11,9 @@
 }
 
 .stat-card:hover {
-  background: rgba(255, 255, 255, 0.02);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--bg-surface-2);
+  border-color: var(--border);
+  transform: translateY(-4px);
 }
 
 .stat-card--highlight {

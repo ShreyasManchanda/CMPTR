@@ -1,9 +1,11 @@
-import { useRef } from 'react';
+import { useRef, useState, Suspense, lazy } from 'react';
+import { motion } from 'framer-motion';
 import Navbar from '../components/layout/Navbar';
+import BackgroundPaths from '../components/ui/BackgroundPaths';
 import StatCard from '../components/ui/StatCard';
 import RecommendationCard from '../components/ui/RecommendationCard';
 import CompetitorRow, { CompetitorCard } from '../components/ui/CompetitorRow';
-import TrendChart from '../components/ui/TrendChart';
+const TrendChart = lazy(() => import('../components/ui/TrendChart'));
 import ExplanationPanel from '../components/ui/ExplanationPanel';
 import AmbiguityPanel from '../components/ui/AmbiguityPanel';
 import RunStatusBadge from '../components/ui/RunStatusBadge';
@@ -21,11 +23,50 @@ function getMedian(arr) {
 }
 
 export default function Dashboard() {
-  const { result, loading, error, status, analyzeProduct, reset } = useAnalysis();
+  const { result, loading, error, status, analyzeProduct, reset, discoverCompetitors, discoverLoading, discoverError } = useAnalysis();
   const formRef = useRef(null);
+  const [productUrl, setProductUrl] = useState('');
+  const [competitorUrls, setCompetitorUrls] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [selectedSuggestions, setSelectedSuggestions] = useState({});
 
   const handleRun = (url, competitors) => {
     analyzeProduct(url, competitors);
+  };
+
+  const handleDiscover = async (url) => {
+    if (!url) return;
+    try {
+      const data = await discoverCompetitors(url);
+      const found = data?.suggestions || [];
+      setSuggestions(found);
+      setSelectedSuggestions(Object.fromEntries(found.map((item) => [item.url, true])));
+    } catch (err) {
+      setSuggestions([]);
+      setSelectedSuggestions({});
+    }
+  };
+
+  const handleToggleSuggestion = (url) => {
+    setSelectedSuggestions((prev) => ({
+      ...prev,
+      [url]: !prev[url],
+    }));
+  };
+
+  const handleAddSelected = () => {
+    const selected = suggestions
+      .filter((item) => selectedSuggestions[item.url])
+      .map((item) => item.url);
+
+    const normalized = Array.from(
+      new Set([
+        ...competitorUrls.split('\n').map((u) => u.trim()).filter(Boolean),
+        ...selected,
+      ])
+    );
+
+    setCompetitorUrls(normalized.join('\n'));
   };
 
   const scrollToForm = () => {
@@ -53,6 +94,7 @@ export default function Dashboard() {
   return (
     <div className="dashboard">
       <Navbar />
+      <BackgroundPaths intensity={1} />
 
       <main className="dashboard__main">
         <div className="dashboard__layout">
@@ -64,7 +106,25 @@ export default function Dashboard() {
             <div className="dashboard__sidebar-inner">
               <h2 className="dashboard__sidebar-title">Analysis Setup</h2>
               
-              <InputForm onSubmit={handleRun} loading={loading} />
+              <InputForm
+                productUrl={productUrl}
+                competitorUrls={competitorUrls}
+                onUrlChange={setProductUrl}
+                onCompetitorChange={setCompetitorUrls}
+                onDiscover={handleDiscover}
+                discovering={discoverLoading}
+                suggestions={suggestions}
+                selectedSuggestions={selectedSuggestions}
+                onToggleSuggestion={handleToggleSuggestion}
+                onAddSelected={handleAddSelected}
+                onSubmit={handleRun}
+                loading={loading}
+              />
+              {discoverError && (
+                <div className="dashboard__discover-error">
+                  <p>{discoverError}</p>
+                </div>
+              )}
               
               {result && (
                 <div className="dashboard__run-meta">
@@ -102,10 +162,17 @@ export default function Dashboard() {
             )}
 
             {showResult && (
-              <div className="dashboard__results-wrapper">
+              <motion.div className="dashboard__results-wrapper"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: {},
+                  visible: { transition: { staggerChildren: 0.05 } }
+                }}
+              >
                 
-                {/* Content Header */}
-                <div className="dashboard__content-header">
+                  {/* Content Header */}
+                  <div className="dashboard__content-header">
                   <div>
                     <h1 className="dashboard__product-name">
                       {result.product_id || 'Product Analysis'}
@@ -114,10 +181,10 @@ export default function Dashboard() {
                   <RunStatusBadge status={status} />
                 </div>
 
-                <div className="dashboard__results-grid">
+                  <div className="dashboard__results-grid">
                   
                   {/* 1. HERO ROW (The Verdict) */}
-                  <div className="dashboard__hero-row">
+                  <motion.div className="dashboard__hero-row" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                     {result.decision?.action === 'manual_review' && (
                       <AmbiguityPanel advice={result.ai_advice} />
                     )}
@@ -129,33 +196,35 @@ export default function Dashboard() {
                       policyReason={result.decision?.policy_reason}
                       currency={cur}
                     />
-                  </div>
+                  </motion.div>
 
                   {/* 2. STATS ROW (Market Nuance) */}
-                  <div className="dashboard__stats-row">
+                  <motion.div className="dashboard__stats-row" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                     <StatCard label="Min Price" value={`${cur}${stats.min?.toLocaleString() || '—'}`} />
                     <StatCard label="Max Price" value={`${cur}${stats.max?.toLocaleString() || '—'}`} />
                     <StatCard label="Market Median" value={`${cur}${stats.median?.toLocaleString() || '—'}`} />
                     <StatCard label="Your Price" value={`${cur}${result.my_price?.toLocaleString() || '—'}`} highlight={true} />
                     <StatCard label="Sample Size" value={stats.count} mono={false} />
                     <StatCard label="Avg Confidence" value={stats.avgConf != null ? stats.avgConf.toFixed(2) : '—'} />
-                  </div>
+                  </motion.div>
 
                   {/* 3. INSIGHTS ROW (Deep Dive) */}
-                  <div className="dashboard__insights-row">
+                  <motion.div className="dashboard__insights-row" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                     <div className="dashboard__insights-left">
                       <ExplanationPanel content={result.explanation} />
                     </div>
                     <div className="dashboard__insights-right">
                       <div className="dashboard__chart-card">
                         <div className="dashboard__section-label">Price Distribution</div>
-                        <TrendChart competitors={competitors} ourPrice={result.my_price} currency={cur} />
+                        <Suspense fallback={<div className="dashboard__chart-fallback">Loading chart…</div>}>
+                          <TrendChart competitors={competitors} ourPrice={result.my_price} currency={cur} />
+                        </Suspense>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
 
                   {/* 4. RAW DATA ROW */}
-                  <div className="dashboard__data-row">
+                  <motion.div className="dashboard__data-row" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
                     <div className="dashboard__section-label">Raw Competitor Data</div>
                     <div className="dashboard__table-card">
                       <div className="dashboard__table-header">
@@ -195,10 +264,10 @@ export default function Dashboard() {
                         ))}
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
 
                 </div>
-              </div>
+              </motion.div>
             )}
             
           </section>

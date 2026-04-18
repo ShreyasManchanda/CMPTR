@@ -1,12 +1,15 @@
 .dashboard {
   min-height: 100vh;
   background: var(--bg-base);
+  position: relative;
 }
 
 .dashboard__main {
   max-width: 1400px;
   margin: 0 auto;
   padding: 96px var(--space-4) var(--space-8);
+  position: relative;
+  z-index: 1;
 }
 
 /* Layout */

@@ -2,36 +2,28 @@
    Floating Glass Navbar
    ============================================ */
 .navbar {
-  position: fixed;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 100;
-  width: calc(100% - 48px);
-  max-width: 1100px;
-  height: 48px;
-  background: rgba(8, 9, 11, 0.7);
-  backdrop-filter: blur(16px) saturate(1.3);
-  -webkit-backdrop-filter: blur(16px) saturate(1.3);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset;
-  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-  animation: fadeInUp 0.4s ease-out;
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  width: 100%;
+  height: 64px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-navbar);
+  transition: transform 0.28s cubic-bezier(0.2,0.8,0.2,1), background 0.2s ease, border-color 0.2s;
 }
 
-.navbar--scrolled {
-  background: rgba(8, 9, 11, 0.88);
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-}
+.navbar--hidden { transform: translateY(-110%); }
+
+.navbar--scrolled { background: var(--glass-bg-strong); }
 
 .navbar__inner {
-  max-width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
   height: 100%;
   padding: 0 20px;
   display: flex;
@@ -40,34 +32,31 @@
 }
 
 .navbar__logo {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: 18px;
   letter-spacing: -0.01em;
   color: var(--text-primary);
   display: flex;
-  align-items: baseline;
-  gap: 1px;
+  align-items: center;
+  gap: 6px;
   user-select: none;
   text-decoration: none;
   transition: opacity 0.15s;
 }
 
-.navbar__logo:hover {
-  opacity: 0.85;
-}
+.navbar__logo:hover { opacity: 0.9; }
+
+.navbar__logo .navbar__logo-word { font-weight: 800; }
 
 .navbar__star {
   color: var(--accent);
-  font-size: 20px;
-  line-height: 1;
+  font-size: 26px;
+  line-height: 0.8;
+  text-shadow: 0 0 12px var(--accent-glow), 0 0 6px rgba(16,185,129,0.5);
 }
 
-.navbar__links {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-}
+.navbar__links { display: flex; align-items: center; gap: 28px; }
 
 .navbar__link {
   font-size: 13px;
@@ -105,31 +94,29 @@
 }
 
 .navbar__cta {
-  background: var(--accent);
+  background: linear-gradient(135deg,var(--accent) 0%,var(--accent-dim) 100%);
   color: #000;
-  padding: 6px 16px;
+  padding: 8px 18px;
   border-radius: var(--radius-pill);
-  font-weight: 600;
-  font-size: 12px;
+  font-weight: 700;
+  font-size: 13px;
   text-decoration: none;
-  transition: background 0.15s ease, transform 0.1s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  box-shadow: 0 6px 22px rgba(0,0,0,0.45), 0 0 18px -8px var(--accent-glow);
 }
 
-.navbar__cta:hover {
-  background: var(--accent-dim);
-  transform: translateY(-1px);
-}
+.navbar__cta:hover { transform: translateY(-2px); }
 
 .navbar__avatar {
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: var(--bg-surface-2);
   border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 12px;
   font-family: var(--font-mono);
   color: var(--text-secondary);
 }

@@ -6,11 +6,10 @@ from pricing.pricing_engine import Recommendation
 @dataclass(frozen=True)
 class FinalAction:
     product_id: str
-    final_action: str               
-    suggested_price: Optional[float] 
+    final_action: str
+    suggested_price: Optional[float]
     confidence: float
-    policy_reason: str              
-
+    policy_reason: str
 
 class RulesAgent:
 

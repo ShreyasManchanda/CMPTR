@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './Navbar.css';
 
 export default function Navbar() {
@@ -7,28 +7,44 @@ export default function Navbar() {
   const isDashboard = location.pathname === '/dashboard';
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const lastY = useRef(0);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', onScroll);
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 10);
+
+      const delta = y - (lastY.current || 0);
+      if (y < 60) {
+        setHidden(false);
+      } else if (delta > 8) {
+        setHidden(true);
+      } else if (delta < -8) {
+        setHidden(false);
+      }
+      lastY.current = y;
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   return (
-    <nav className={`navbar glass ${scrolled ? 'navbar--scrolled' : ''}`}>
+    <nav className={`navbar ${scrolled ? 'navbar--scrolled' : ''} ${hidden ? 'navbar--hidden' : ''}`} aria-label="Main navigation">
       <div className="navbar__inner">
-        <Link to="/" className="navbar__logo">
-          CMPT<span className="navbar__star">*</span>
+        <Link to="/" className="navbar__logo" aria-label="CMPT home">
+          <span className="navbar__logo-word">CMPT</span>
+          <span className="navbar__star" aria-hidden="true">*</span>
         </Link>
 
-        {/* Desktop nav links */}
         <div className="navbar__links">
           {isDashboard ? (
             <>
-              <NavLink to="/dashboard" label="Overview" active />
-              <NavLink to="/dashboard" label="Runs" />
-              <NavLink to="/dashboard" label="Competitors" />
-              <NavLink to="/dashboard" label="Explain" />
+              <NavLink label="Overview" active />
+              <NavLink label="Runs" />
+              <NavLink label="Competitors" />
+              <NavLink label="Explain" />
             </>
           ) : (
             <>
@@ -41,9 +57,7 @@ export default function Navbar() {
 
         <div className="navbar__actions">
           {isDashboard ? (
-            <>
-              <div className="navbar__avatar">M</div>
-            </>
+            <div className="navbar__avatar" aria-hidden="true">M</div>
           ) : (
             <>
               <Link to="/login" className="navbar__link">Log in</Link>
@@ -52,7 +66,6 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile hamburger */}
         <button
           className="navbar__hamburger"
           onClick={() => setMobileOpen(!mobileOpen)}
@@ -62,7 +75,6 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile menu */}
       {mobileOpen && (
         <div className="navbar__mobile">
           {isDashboard ? (

@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import ConfidenceBar from '../components/ui/ConfidenceBar';
+import BackgroundPaths from '../components/ui/BackgroundPaths';
 import {
   Link as LinkIcon, Bot, LineChart, CheckCircle2,
   MessageSquareText, ShieldCheck, Activity, AlertTriangle,
@@ -58,21 +60,128 @@ function useParallax(speed = 0.08) {
    ════════════════════════════════════════════ */
 export default function LandingPage() {
   const dashRef = useParallax(0.035);
+  const prefersReduced = useReducedMotion();
+
+  /* GSAP hero & preview animations (desktop only, respects reduced-motion) */
+  useEffect(() => {
+    const mm = window.matchMedia('(min-width: 1024px)');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!mm.matches || reduced) return; // only run on desktop and when motion is allowed
+
+    let ctx;
+    let gsapLib;
+    (async () => {
+      try {
+        const gsapModule = await import('gsap');
+        const ScrollTriggerModule = await import('gsap/ScrollTrigger');
+        gsapLib = gsapModule.default || gsapModule;
+        gsapLib.registerPlugin(ScrollTriggerModule.ScrollTrigger || ScrollTriggerModule.default || ScrollTriggerModule);
+
+        const lines = document.querySelectorAll('.hero__headline-line');
+        gsapLib.set(lines, { y: 36, opacity: 0 });
+        gsapLib.to(lines, {
+          y: 0,
+          opacity: 1,
+          stagger: 0.08,
+          duration: 0.7,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: '.hero',
+            start: 'top+=10 top',
+            once: true,
+          },
+        });
+
+        // Preview card subtle tilt/scale easing on scroll
+        const preview = document.querySelector('.hero__preview-card');
+        if (preview) {
+          gsapLib.fromTo(preview,
+            { rotateX: 5, rotateY: -5, scale: 1.08 },
+            {
+              rotateX: 0,
+              rotateY: 0,
+              scale: 1,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: '.hero__preview',
+                start: 'top bottom',
+                end: 'center center',
+                scrub: 0.6,
+              },
+            }
+          );
+        }
+      } catch (e) {
+        // fail silently — animations are progressive enhancement
+        // console.warn('GSAP failed to load', e);
+      }
+    })();
+
+    return () => {
+      if (gsapLib && gsapLib.context) gsapLib.context(() => {});
+      if (ctx && ctx.revert) ctx.revert();
+    };
+  }, []);
+
+  function AnimatedHeadline({ prefersReduced }) {
+    const parts = [
+      { text: 'Pricing intelligence', accent: false },
+      { text: 'that knows', accent: false },
+      { text: 'when to act', accent: true },
+      { text: '— and when not to.', accent: false },
+    ];
+
+    if (prefersReduced) {
+      return (
+        <h1 className="hero__headline">
+          Pricing intelligence<br />that knows when to act<br />— and when not to.
+        </h1>
+      );
+    }
+
+    const container = {
+      hidden: {},
+      visible: { transition: { staggerChildren: 0.02 } },
+    };
+
+    const letter = {
+      hidden: { y: 60, opacity: 0 },
+      visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 160, damping: 22 } },
+    };
+
+    return (
+      <h1 className="hero__headline">
+        <motion.span variants={container} initial="hidden" animate="visible" className="hero__headline-words">
+          {parts.map((part, wi) => (
+            <span key={wi} className="hero__headline-word" style={{ display: 'inline-block', marginRight: '12px' }}>
+              {part.text.split(' ').map((word, widx) => (
+                <span key={widx} style={{ display: 'inline-block', marginRight: '10px' }}>
+                  {word.split('').map((ch, i) => (
+                    <motion.span key={`${wi}-${widx}-${i}`} variants={letter} className={part.accent ? 'hero__char hero__char--accent' : 'hero__char'} style={{ display: 'inline-block' }}>
+                      {ch}
+                    </motion.span>
+                  ))}
+                </span>
+              ))}
+              {part.accent && <em className="sr-only"> (emphasized) </em>}
+            </span>
+          ))}
+        </motion.span>
+      </h1>
+    );
+  }
 
   return (
     <div className="landing">
       <Navbar />
-
-      {/* ── HERO ─ Full viewport ── */}
+      <BackgroundPaths intensity={0.95} />
       <section className="hero">
+
+        {/* existing hero content follows (kept for clarity) */}
         <div className="hero__glow" />
         <div className="hero__content">
           <div className="hero__text">
-            <h1 className="hero__headline">
-              Pricing intelligence<br />
-              that knows <em className="hero__italic">when to act</em><br />
-              — and when not to.
-            </h1>
+            <AnimatedHeadline prefersReduced={prefersReduced} />
             <p className="hero__sub">
               CMPT watches your competitors around the clock, analyses market signals
               in real time, and tells you exactly what to do with your pricing — backed

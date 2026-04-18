@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import Navbar from '../components/layout/Navbar';
+import BackgroundPaths from '../components/ui/BackgroundPaths';
 import './Login.css';
 
 export default function Login() {
@@ -16,8 +18,14 @@ export default function Login() {
   return (
     <div className="login-page">
       <Navbar />
+      <BackgroundPaths intensity={0.8} />
       <div className="login-page__center">
-        <div className="login-card">
+        <motion.div
+          className="login-card"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 30 }}
+        >
           <div className="login-card__header">
             <div className="login-card__logo">CMPT<span className="login-card__star">*</span></div>
             <p className="login-card__sub">Sign in to your account</p>
@@ -25,20 +33,26 @@ export default function Login() {
           <form onSubmit={handleLogin} className="login-card__form">
             <div className="login-card__field">
               <label htmlFor="login-email" className="login-card__label">Email</label>
-              <input id="login-email" type="email" placeholder="you@company.com" required defaultValue="demo@cmpt.app" />
+              <input id="login-email" type="email" placeholder="demo@cmpt.app" required defaultValue="demo@cmpt.app" />
             </div>
             <div className="login-card__field">
               <label htmlFor="login-pass" className="login-card__label">Password</label>
-              <input id="login-pass" type="password" placeholder="••••••••" required defaultValue="password123" />
+              <input id="login-pass" type="password" placeholder="password123" required defaultValue="password123" />
             </div>
             <div className="login-card__demo-note">
               Demo mode — any credentials work
             </div>
-            <button type="submit" className="login-card__submit" disabled={loading}>
+            <motion.button
+              type="submit"
+              className="login-card__submit"
+              disabled={loading}
+              whileHover={!loading ? { scale: 1.02 } : {}}
+              whileTap={!loading ? { scale: 0.98 } : {}}
+            >
               {loading ? 'Signing in...' : 'Log in'}
-            </button>
+            </motion.button>
           </form>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

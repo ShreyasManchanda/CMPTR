@@ -3,6 +3,7 @@
   display: flex;
   flex-direction: column;
   background: var(--bg-base);
+  position: relative;
 }
 
 .login-page__center {
@@ -11,13 +12,19 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-3);
+  position: relative;
+  z-index: 1;
 }
 
 .login-card {
-  background: var(--bg-surface-1);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px) saturate(160%);
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-elevated);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 400px;
   padding: var(--space-6) var(--space-4);

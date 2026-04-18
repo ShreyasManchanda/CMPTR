@@ -11,11 +11,15 @@ function timeAgo(isoString) {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-export default function CompetitorRow({ store, productName, price, stockStatus, confidence, scrapedAt, currency = '₹' }) {
+function useCompetitorData(confidence, stockStatus) {
   const confPct = Math.round((confidence || 0) * 100);
   const confClass = confPct >= 80 ? 'high' : confPct >= 50 ? 'medium' : 'low';
-  const isOut = stockStatus === 'out_of_stock';
-  const inStock = !isOut;
+  const inStock = stockStatus !== 'out_of_stock';
+  return { confPct, confClass, inStock };
+}
+
+export default function CompetitorRow({ store, productName, price, stockStatus, confidence, scrapedAt, currency = '₹' }) {
+  const { confPct, confClass, inStock } = useCompetitorData(confidence, stockStatus);
 
   return (
     <div className="comp-row">
@@ -35,12 +39,8 @@ export default function CompetitorRow({ store, productName, price, stockStatus, 
   );
 }
 
-/* Mobile card variant */
 export function CompetitorCard({ store, productName, price, stockStatus, confidence, scrapedAt, currency = '₹' }) {
-  const confPct = Math.round((confidence || 0) * 100);
-  const confClass = confPct >= 80 ? 'high' : confPct >= 50 ? 'medium' : 'low';
-  const isOut = stockStatus === 'out_of_stock';
-  const inStock = !isOut;
+  const { confPct, confClass, inStock } = useCompetitorData(confidence, stockStatus);
 
   return (
     <div className="comp-card">

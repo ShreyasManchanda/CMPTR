@@ -40,7 +40,53 @@
   transform: translateY(-1px);
 }
 
-.input-form__submit:disabled {
+.input-form__secondary,
+.input-form__tertiary {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 10px;
+  border-radius: var(--radius-btn);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.input-form__secondary:hover:not(:disabled),
+.input-form__tertiary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
+}
+
+.input-form__secondary:disabled,
+.input-form__tertiary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.input-form__suggestions {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 14px;
+  border-radius: var(--radius-card);
+  display: grid;
+  gap: 10px;
+}
+
+.input-form__suggestions-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.input-form__suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.input-form__suggestion-item input {
+  width: 16px;
+  height: 16px;
 }

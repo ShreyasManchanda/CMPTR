@@ -1,9 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { postAnalyze } from '../lib/api';
+import { postAnalyze, postDiscoverCompetitors } from '../lib/api';
 
-// ── Mock data for offline / demo mode ──
 const MOCK_RESULT = {
   product_id: 'sneaker-x1-pro',
   my_price: 1499.0,
@@ -52,19 +51,15 @@ const MOCK_RESULT = {
 /**
  * useAnalysis — React Query–powered hook for pricing analysis.
  *
- * Uses `useMutation` because the /analyze endpoint is inherently
- * a POST action (mutations), not a cacheable query.
- *
+ * Uses `useMutation` because the /analyze endpoint is a POST action.
  * Falls back to mock data when VITE_USE_MOCK !== 'false'.
  */
 export function useAnalysis() {
   const useMock = import.meta.env.VITE_USE_MOCK !== 'false';
 
-  // Mutation backed by React Query
   const mutation = useMutation({
     mutationFn: async ({ myProductUrl, competitorUrls }) => {
       if (useMock) {
-        // Simulate network latency for demo mode
         await new Promise((resolve) => setTimeout(resolve, 5000));
         return MOCK_RESULT;
       }
@@ -85,7 +80,26 @@ export function useAnalysis() {
     },
   });
 
-  // Convenience wrapper matching the original API surface
+  const discoveryMutation = useMutation({
+    mutationFn: async ({ myProductUrl }) => {
+      if (useMock) {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        return {
+          status: 'success',
+          product_name: 'Mock Product',
+          suggestions: [
+            { store: 'competitor1.com', url: 'https://competitor1.com' },
+            { store: 'competitor2.com', url: 'https://competitor2.com' },
+          ],
+        };
+      }
+      return postDiscoverCompetitors(myProductUrl);
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Could not discover competitors.');
+    },
+  });
+
   const analyzeProduct = useCallback(
     (myProductUrl, competitorUrls) => {
       mutation.mutate({ myProductUrl, competitorUrls });
@@ -93,11 +107,17 @@ export function useAnalysis() {
     [mutation],
   );
 
+  const discoverCompetitors = useCallback(
+    (myProductUrl) => {
+      return discoveryMutation.mutateAsync({ myProductUrl });
+    },
+    [discoveryMutation],
+  );
+
   const reset = useCallback(() => {
     mutation.reset();
   }, [mutation]);
 
-  // Derive a simple status label
   let status = 'idle';
   if (mutation.isPending) status = 'running';
   else if (mutation.isSuccess) status = 'complete';
@@ -110,5 +130,8 @@ export function useAnalysis() {
     status,
     analyzeProduct,
     reset,
+    discoverCompetitors,
+    discoverLoading: discoveryMutation.isPending,
+    discoverError: discoveryMutation.error?.message ?? null,
   };
 }

@@ -1,13 +1,22 @@
-import { useState } from 'react';
 import './InputForm.css';
 
-export default function InputForm({ onSubmit, loading }) {
-  const [productUrl, setProductUrl] = useState('');
-  const [competitorUrls, setCompetitorUrls] = useState('');
-
+export default function InputForm({
+  productUrl,
+  competitorUrls,
+  onUrlChange,
+  onCompetitorChange,
+  onDiscover,
+  discovering,
+  suggestions,
+  selectedSuggestions,
+  onToggleSuggestion,
+  onAddSelected,
+  onSubmit,
+  loading,
+}) {
   const handleSubmit = (e) => {
     e.preventDefault();
-    const urls = competitorUrls.split('\n').map(u => u.trim()).filter(Boolean);
+    const urls = competitorUrls.split('\n').map((u) => u.trim()).filter(Boolean);
     onSubmit(productUrl, urls);
   };
 
@@ -21,7 +30,7 @@ export default function InputForm({ onSubmit, loading }) {
           required
           placeholder="https://yourstore.com/products/my-product"
           value={productUrl}
-          onChange={(e) => setProductUrl(e.target.value)}
+          onChange={(e) => onUrlChange(e.target.value)}
         />
       </div>
 
@@ -32,10 +41,42 @@ export default function InputForm({ onSubmit, loading }) {
           rows={4}
           placeholder={"https://competitor1.com\nhttps://competitor2.com"}
           value={competitorUrls}
-          onChange={(e) => setCompetitorUrls(e.target.value)}
+          onChange={(e) => onCompetitorChange(e.target.value)}
         />
         <span className="input-form__hint">Enter one URL per line</span>
       </div>
+
+      <button
+        type="button"
+        className="input-form__secondary"
+        onClick={() => onDiscover(productUrl)}
+        disabled={discovering || !productUrl}
+      >
+        {discovering ? 'Finding competitors…' : 'Find competitors'}
+      </button>
+
+      {suggestions?.length > 0 && (
+        <div className="input-form__suggestions">
+          <div className="input-form__suggestions-title">Suggested competitors</div>
+          {suggestions.map((suggestion) => (
+            <label key={suggestion.url} className="input-form__suggestion-item">
+              <input
+                type="checkbox"
+                checked={!!selectedSuggestions[suggestion.url]}
+                onChange={() => onToggleSuggestion(suggestion.url)}
+              />
+              <span>{suggestion.store || suggestion.url}</span>
+            </label>
+          ))}
+          <button
+            type="button"
+            className="input-form__tertiary"
+            onClick={onAddSelected}
+          >
+            Add selected to competitor list
+          </button>
+        </div>
+      )}
 
       <button type="submit" className="input-form__submit" disabled={loading}>
         {loading ? 'Analyzing...' : 'Run Analysis'}

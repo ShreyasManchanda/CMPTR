@@ -1,5 +1,6 @@
 import ConfidenceBar from './ConfidenceBar';
 import './RecommendationCard.css';
+import { motion, useReducedMotion } from 'framer-motion';
 
 const ACTION_CONFIG = {
   REDUCE: { color: 'var(--accent)', label: 'REDUCE PRICE' },
@@ -12,9 +13,11 @@ export default function RecommendationCard({ action, suggestedPrice, currentPric
 
   const key = action.toUpperCase().replace(' ', '_');
   const config = ACTION_CONFIG[key] || ACTION_CONFIG.HOLD;
+  const shouldReduce = useReducedMotion();
+  const hoverProps = shouldReduce ? {} : { whileHover: { y: -4 }, whileTap: { scale: 0.985 }, transition: { type: 'spring', stiffness: 300, damping: 26 } };
 
   return (
-    <div className="rec-hero" style={{ '--action-color': config.color }}>
+    <motion.div className="rec-hero" style={{ '--action-color': config.color }} {...hoverProps} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
        <div className="rec-hero__inner">
          
          <div className="rec-hero__top-row">
@@ -62,6 +65,6 @@ export default function RecommendationCard({ action, suggestedPrice, currentPric
          </div>
 
        </div>
-    </div>
+    </motion.div>
   );
 }
