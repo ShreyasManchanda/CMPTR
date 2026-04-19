@@ -96,7 +96,7 @@ export default function Dashboard() {
   return (
     <div className="dashboard">
       <Navbar />
-      <BackgroundPaths hideOnDashboard={true} />
+      <BackgroundPaths blur={true} />
 
       {/* TOP BAR (Fix 4) */}
       {showResult && (

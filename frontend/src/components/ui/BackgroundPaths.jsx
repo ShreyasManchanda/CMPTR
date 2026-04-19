@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 
 export default function BackgroundPaths({ 
   variant = 'home', 
-  hideOnDashboard = false 
+  hideOnDashboard = false,
+  blur = false
 }) {
   const canvasRef = useRef(null);
 
@@ -143,6 +144,7 @@ export default function BackgroundPaths({
         WebkitMaskImage: variant === 'login'
           ? 'radial-gradient(ellipse 70% 70% at 50% 50%, transparent 25%, black 100%)'
           : 'none',
+        filter: blur ? 'blur(2px)' : 'none',
       }}
     />
   );

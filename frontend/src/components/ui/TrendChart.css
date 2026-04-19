@@ -7,6 +7,15 @@
   position: relative;
 }
 
+.trend-chart::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(ellipse, rgba(22,255,177,0.05) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: -1;
+}
+
 .trend-tooltip {
   background: rgba(10,10,10,0.95);
   border: 1px solid rgba(255,255,255,0.08);
