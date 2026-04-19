@@ -1,6 +1,6 @@
 import math
+import time
 import logging
-from functools import lru_cache
 from typing import List, Optional, Dict
 from statistics import mean, median, stdev
 from dataclasses import dataclass
@@ -12,8 +12,18 @@ from constants import CONFIDENCE_MAP
 logger = logging.getLogger(__name__)
 
 
-@lru_cache(maxsize=1)
+# ── Exchange rate cache with TTL ──────────────────────────────────────
+_exchange_rate_cache: dict = {}
+_exchange_rate_ts: float = 0.0
+_EXCHANGE_RATE_TTL = 3600  # 1 hour
+
+
 def fetch_live_exchange_rates() -> dict:
+    global _exchange_rate_cache, _exchange_rate_ts
+
+    if _exchange_rate_cache and (time.time() - _exchange_rate_ts) < _EXCHANGE_RATE_TTL:
+        return _exchange_rate_cache
+
     fallback = {
         "USD": 1.0, "EUR": 0.90, "GBP": 0.75, "INR": 83.00,
         "CAD": 1.35, "AUD": 1.50, "JPY": 150.00, "CNY": 7.20,
@@ -24,9 +34,14 @@ def fetch_live_exchange_rates() -> dict:
             rates = response.json().get("rates", {})
             rates["USD"] = 1.0
             logger.info("Fetched live exchange rates from frankfurter.")
+            _exchange_rate_cache = rates
+            _exchange_rate_ts = time.time()
             return rates
     except requests.RequestException as e:
         logger.error(f"Failed to fetch exchange rates, using fallback: {e}")
+
+    _exchange_rate_cache = fallback
+    _exchange_rate_ts = time.time()
     return fallback
 
 
@@ -182,14 +197,13 @@ class PricingEngine:
 
         gap = (my_price_val - median_price) / median_price if median_price != 0 else 0.0
 
-        # Already cheapest: more than 5% below competitor minimum
-        if my_price_val < (stats.min_price * 0.95):
-            return Recommendation(product_id, my_price_val, None, "no_change", "already_cheapest", stats.avg_confidence, stats)
-
-        REDUCE_THRESHOLD = 0.10
         rec_conf = self._compute_recommendation_confidence(stats, volatility_ratio)
 
+        REDUCE_THRESHOLD = 0.10
+        INCREASE_THRESHOLD = -0.10  # merchant is > 10% below median
+
         if gap > REDUCE_THRESHOLD:
+            # Merchant is too expensive — recommend reducing
             suggested = median_price * 0.98 if min_is_suspicious else max(stats.min_price, median_price * 0.98)
             reason = "median_above_by_{:.2f}%".format(gap * 100.0)
             return Recommendation(
@@ -197,6 +211,20 @@ class PricingEngine:
                 my_price=my_price_val,
                 suggested_price=round(float(suggested), 2),
                 action="reduce",
+                reason=reason,
+                rec_confidence=rec_conf,
+                stats=stats,
+            )
+
+        if gap < INCREASE_THRESHOLD:
+            # Merchant is significantly cheaper than market — opportunity to increase
+            suggested = round(median_price * 0.95, 2)  # 5% below median to stay competitive
+            reason = "median_below_by_{:.2f}%".format(abs(gap) * 100.0)
+            return Recommendation(
+                product_id=product_id,
+                my_price=my_price_val,
+                suggested_price=suggested,
+                action="increase",
                 reason=reason,
                 rec_confidence=rec_conf,
                 stats=stats,

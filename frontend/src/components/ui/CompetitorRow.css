@@ -1,23 +1,21 @@
 .comp-row {
   display: grid;
-  grid-template-columns: 1.2fr 1.5fr 0.8fr 0.8fr 0.6fr 0.8fr;
-  gap: var(--space-2);
-  padding: 12px var(--space-3);
+  grid-template-columns: 1.2fr 1.5fr 0.8fr 0.8fr 0.6fr 1.2fr;
+  gap: 16px;
   align-items: center;
-  font-size: 14px;
+  height: 48px;
+  padding: 0 24px;
   border-bottom: 1px solid var(--border);
-  transition: background 0.15s ease;
-}
-
-.comp-row:nth-child(even) {
-  background: var(--bg-surface-2);
+  transition: background 0.2s ease;
 }
 
 .comp-row:hover {
-  background: rgba(52, 211, 153, 0.03);
+  background: var(--bg-surface-2);
 }
 
 .comp-row__store {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
   white-space: nowrap;
@@ -26,110 +24,165 @@
 }
 
 .comp-row__product {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
   color: var(--text-secondary);
-  font-size: 13px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .comp-row__price {
-  font-family: var(--font-mono);
-  font-size: 14px;
   text-align: right;
+  font-family: 'Geist Mono', monospace;
+  font-size: 13px;
   color: var(--text-primary);
 }
 
-.comp-row__stock {
-  text-align: center;
+.comp-row__price--lower {
+  color: #ef4444;
 }
 
-.comp-row__stock-badge {
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: var(--radius-pill);
-  font-weight: 500;
-}
-
-.comp-row__stock-badge--in {
-  background: var(--accent-muted);
+.comp-row__price--higher {
   color: var(--accent);
 }
 
-.comp-row__stock-badge--out {
-  background: rgba(248, 113, 113, 0.1);
-  color: var(--error);
+.comp-row__stock,
+.comp-row__confidence {
+  display: flex;
+  justify-content: center;
 }
 
-.comp-row__confidence {
-  text-align: center;
+.comp-row__stock-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  width: auto;
+  height: auto;
+  white-space: nowrap;
+}
+
+.comp-row__stock-badge--out {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
 }
 
 .comp-row__conf-pill {
-  font-family: var(--font-mono);
-  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 2px 8px;
-  border-radius: var(--radius-pill);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
   border: 1px solid var(--border);
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  width: auto;
+  height: auto;
+  white-space: nowrap;
 }
-
-.comp-row__conf-pill--high { color: var(--accent); }
-.comp-row__conf-pill--medium { color: var(--warning); }
-.comp-row__conf-pill--low { color: var(--error); }
 
 .comp-row__scraped {
-  font-size: 12px;
-  color: var(--text-secondary);
+  position: relative;
   text-align: right;
-}
-
-/* Mobile card */
-.comp-card {
-  background: var(--bg-surface-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  padding: var(--space-2);
-  display: none;
-}
-
-.comp-card__header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  margin-bottom: 4px;
 }
 
-.comp-card__store {
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.comp-card__product {
-  font-size: 13px;
+.comp-row__time {
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
   color: var(--text-secondary);
-  margin-bottom: 8px;
+  transition: opacity 0.2s ease;
 }
 
+.comp-row__source {
+  position: absolute;
+  right: 0;
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+}
+
+.comp-row:hover .comp-row__time {
+  opacity: 0;
+}
+
+.comp-row:hover .comp-row__source {
+  opacity: 1;
+}
+
+.comp-card {
+  background: #0A0A0A;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 12px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.comp-card__header,
 .comp-card__footer {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.comp-card__store {
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.comp-card__product {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
 .comp-card__price {
-  font-family: var(--font-mono);
+  font-family: 'Geist Mono', monospace;
+  font-size: 13px;
   color: var(--text-primary);
-  font-weight: 500;
 }
 
-.comp-card__time {
-  color: var(--text-secondary);
-  font-size: 12px;
-  margin-left: auto;
+.comp-card__price--lower {
+  color: #ef4444;
 }
 
-@media (max-width: 768px) {
-  .comp-row { display: none; }
-  .comp-card { display: block; }
+.comp-card__price--higher {
+  color: var(--accent);
+}
+
+.comp-card__source {
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+}
+
+@media (max-width: 900px) {
+  .comp-row {
+    display: none;
+  }
+
+  .comp-card {
+    display: flex;
+  }
 }

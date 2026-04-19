@@ -1,43 +1,53 @@
 .explanation-panel {
-  background: var(--bg-surface-1);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: var(--radius-card);
-  padding: var(--space-4);
+  background: #0A0A0A;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: var(--space-6);
+  box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   height: 100%;
+  min-height: 200px;
 }
 
 .explanation-panel__header {
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
-  margin-bottom: var(--space-3);
+  letter-spacing: 0.08em;
+  color: #A1A1AA;
+  margin-bottom: var(--space-4);
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.explanation-panel__header::before {
-  content: '';
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 8px rgba(22, 255, 177, 0.4);
+.explanation-panel__dot {
+  color: var(--accent);
+  font-size: 14px;
 }
 
-/* Specific markdown adjustments for the panel */
-.markdown-content {
+.explanation-panel__markdown {
+  font-family: var(--font-sans);
   font-size: 14px;
-  color: var(--text-primary);
-  line-height: 1.6;
+  line-height: 1.7;
+  color: var(--text-secondary);
 }
-.markdown-content p {
+
+.explanation-panel__markdown p {
   margin-bottom: 12px;
 }
-.markdown-content strong {
-  margin-right: 4px; /* Space out bold phrases slightly. */
+
+.explanation-panel__markdown strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.explanation-panel__markdown ul, 
+.explanation-panel__markdown ol {
+  padding-left: 20px;
+  margin-bottom: 12px;
+}
+
+.explanation-panel__markdown li {
+  margin-bottom: 6px;
 }

@@ -98,27 +98,15 @@ GEMINI_API_KEY=your_key
 DATABASE_URL=postgresql://postgres:1234@localhost:5432/cmpt_db
 ```
 
-### 2. Start the Backend with Docker
+### 2. Start with Docker
 
 ```bash
 docker compose up -d
 ```
 
-The system will start PostgreSQL and the FastAPI backend. Use the **init retry loop** logic to ensure a stable connection even if Postgres boots slowly. The backend will be accessible at `http://localhost:8000`.
+The system will start PostgreSQL and the FastAPI backend. Use the **init retry loop** logic to ensure a stable connection even if Postgres boots slowly.
 
-### 3. Start the Frontend
-
-In a new terminal window, start the React frontend:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The interface will be available at `http://localhost:5173`.
-
-### 4. Run Tests
+### 3. Run Tests
 
 The test suite is unified and should be run from the `backend/` directory:
 

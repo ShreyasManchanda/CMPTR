@@ -1,7 +1,9 @@
 import os
 import re
 import logging
-from typing import List
+import unicodedata
+import time
+from typing import List, Any
 from datetime import datetime
 from urllib.parse import urlparse, urlunparse
 
@@ -10,14 +12,96 @@ from firecrawl import FirecrawlApp
 logger = logging.getLogger(__name__)
 
 
+CURRENCY_SYMBOL_MAP = {
+    "$": "USD",
+    "\u00a3": "GBP",
+    "\u20ac": "EUR",
+    "\u00a5": "JPY",
+    "\u20b9": "INR",
+}
+
+
 class Scraper:
-    """Scrapes product data from any e-commerce store via Firecrawl."""
+    """Scrapes product data from e-commerce pages via Firecrawl."""
 
     def __init__(self):
         api_key = os.getenv("FIRECRAWL_API_KEY")
         if not api_key:
             raise RuntimeError("FIRECRAWL_API_KEY not set")
         self.firecrawl = FirecrawlApp(api_key=api_key)
+
+    def _to_float(self, value: Any):
+        if value is None:
+            return None
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str):
+            cleaned = value.strip().replace(",", "")
+            cleaned = re.sub(r"[^0-9.\-]", "", cleaned)
+            if not cleaned:
+                return None
+            try:
+                return float(cleaned)
+            except ValueError:
+                return None
+        return None
+
+    def _extract_price_currency_from_text(self, text: str):
+        if not text:
+            return None, None
+
+        # Normalize common mojibake and unicode variants before regex matching.
+        text = (
+            text.replace("\u00e2\u201a\u00b9", "\u20b9")
+            .replace("\u00e2\u201a\u00ac", "\u20ac")
+            .replace("\u00c2\u00a3", "\u00a3")
+            .replace("\u00c2\u00a5", "\u00a5")
+            .replace("\u00c2$", "$")
+        )
+        text = unicodedata.normalize("NFKC", text)
+
+        price_match = re.search(
+            r"(?:CA|AU|US)?([\$\u00a3\u20ac\u00a5\u20b9])\s*([\d,]+(?:\.\d{1,2})?)"
+            r"|(USD|EUR|GBP|INR|CAD|AUD|JPY|CNY|CHF)\s*([\d,]+(?:\.\d{1,2})?)"
+            r"|(?:RS|INR)\.?\s*([\d,]+(?:\.\d{1,2})?)"
+            r"|([\d,]+(?:\.\d{1,2})?)\s*(USD|EUR|GBP|INR|CAD|AUD|JPY|CNY|CHF)",
+            text,
+            re.IGNORECASE,
+        )
+
+        if not price_match:
+            return None, None
+
+        # Group mapping:
+        # 1/2 => symbol + value
+        # 3/4 => code + value
+        # 5   => RS/INR prefixed value
+        # 6/7 => value + code
+        symbol_or_code = price_match.group(1) or price_match.group(3) or price_match.group(7)
+        value_str = price_match.group(2) or price_match.group(4) or price_match.group(5) or price_match.group(6)
+
+        price = self._to_float(value_str)
+        if price is None:
+            return None, None
+
+        if price_match.group(5) and not symbol_or_code:
+            symbol_or_code = "INR"
+
+        if symbol_or_code in CURRENCY_SYMBOL_MAP:
+            currency = CURRENCY_SYMBOL_MAP[symbol_or_code]
+        else:
+            currency = str(symbol_or_code).upper() if symbol_or_code else None
+
+        return price, currency
+
+    def _fallback_name_from_url(self, product_url: str):
+        path = (urlparse(product_url).path or "").strip("/")
+        if not path:
+            return None
+        slug = path.split("/")[-1]
+        slug = slug.replace("-", " ").replace("_", " ")
+        slug = re.sub(r"\s+", " ", slug).strip()
+        return slug.title() if slug else None
 
     def scrape_product(self, product_url: str) -> dict:
         product = {
@@ -33,103 +117,143 @@ class Scraper:
             "scraped_at": datetime.utcnow().isoformat(),
         }
 
-        try:
-            result = self.firecrawl.scrape_url(product_url)
-        except Exception as e:
-            logger.error(f"Firecrawl scrape failed for {product_url}: {e}")
-            return product
+        max_retries = 3
+        retry_delay = 2
+
+        for attempt in range(max_retries):
+            try:
+                result = self.firecrawl.scrape_url(
+                    product_url,
+                    formats=["markdown", "extract"],
+                    extract={
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "price": {"type": "number"},
+                                "currency": {"type": "string"},
+                                "availability": {"type": "string"},
+                                "image": {"type": "string"},
+                            },
+                        }
+                    },
+                )
+                break
+            except Exception as e:
+                error_str = str(e).lower()
+                is_transient = "502" in error_str or "503" in error_str or "504" in error_str or "timeout" in error_str or "gateway" in error_str
+                
+                if is_transient and attempt < max_retries - 1:
+                    logger.warning(f"Firecrawl transient error for {product_url} (attempt {attempt + 1}/{max_retries}): {e}. Retrying in {retry_delay}s...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2
+                    continue
+                else:
+                    logger.error(f"Firecrawl scrape failed for {product_url} after {attempt + 1} attempts: {e}")
+                    return product
 
         if not result:
             return product
 
-        # Firecrawl SDK returns a dict; normalize if needed
-        if isinstance(result, dict):
-            pass
-        elif hasattr(result, "model_dump"):
+        if hasattr(result, "model_dump"):
             result = result.model_dump()
-        else:
+        elif not isinstance(result, dict):
             logger.warning(f"Unexpected Firecrawl result type: {type(result)}")
             return product
 
-        # Preferred path: structured data (JSON-LD)
+        # Firecrawl may return fields nested under `data`.
+        if isinstance(result.get("data"), dict):
+            nested = result["data"]
+            if not result.get("markdown") and nested.get("markdown"):
+                result["markdown"] = nested.get("markdown")
+            if not result.get("text") and nested.get("text"):
+                result["text"] = nested.get("text")
+            if not result.get("metadata") and nested.get("metadata"):
+                result["metadata"] = nested.get("metadata")
+            if not result.get("structured_data") and nested.get("structured_data"):
+                result["structured_data"] = nested.get("structured_data")
+
+        markdown = result.get("markdown") or result.get("text") or ""
+        metadata = result.get("metadata", {}) or {}
+
         structured = result.get("structured_data")
-        if structured:
+        if isinstance(structured, list):
+            structured = next((x for x in structured if isinstance(x, dict)), None)
+
+        if isinstance(structured, dict):
             offers = structured.get("offers", {})
             if isinstance(offers, list):
                 offers = offers[0] if offers else {}
+            if not isinstance(offers, dict):
+                offers = {}
 
-            product["product_name"] = structured.get("name")
-            product["scrape_confidence"] = "high"
-            product["current_price"] = offers.get("price")
-            if product["current_price"] is None:
-                product["scrape_confidence"] = "medium"
-            product["currency"] = offers.get("priceCurrency")
-            product["image_url"] = structured.get("image")
+            product["product_name"] = structured.get("name") or metadata.get("og:title")
+            product["image_url"] = structured.get("image") or metadata.get("og:image")
 
-            availability = offers.get("availability", "").lower()
-            if "instock" in availability:
+            product["current_price"] = self._to_float(offers.get("price"))
+            product["old_price"] = self._to_float(offers.get("highPrice"))
+            product["currency"] = offers.get("priceCurrency") or metadata.get("og:price:currency")
+            if isinstance(product["currency"], str):
+                product["currency"] = product["currency"].upper().strip()
+
+            availability = str(offers.get("availability", "")).lower()
+            if "instock" in availability or "in_stock" in availability:
                 product["stock_status"] = "in_stock"
-            elif "outofstock" in availability:
+            elif "outofstock" in availability or "out_of_stock" in availability:
                 product["stock_status"] = "out_of_stock"
 
-            product["source"] = "json_ld"
-            return product
+            if product["current_price"] is not None:
+                product["source"] = "json_ld"
+                product["scrape_confidence"] = "high"
+                return product
 
-        # Secondary path: OpenGraph metadata
-        metadata = result.get("metadata", {})
-        if metadata and metadata.get("og:price:amount"):
-            product["product_name"] = metadata.get("og:title")
-            product["scrape_confidence"] = "high"
-            try:
-                product["current_price"] = float(metadata.get("og:price:amount"))
-            except (ValueError, TypeError):
-                pass
-            product["currency"] = metadata.get("og:price:currency")
-            product["image_url"] = metadata.get("og:image")
+        og_price = (
+            metadata.get("og:price:amount")
+            or metadata.get("product:price:amount")
+            or metadata.get("twitter:data1")
+        )
+        if og_price is not None:
+            product["product_name"] = product["product_name"] or metadata.get("og:title") or metadata.get("title")
+            product["image_url"] = product["image_url"] or metadata.get("og:image") or metadata.get("image")
+            product["current_price"] = self._to_float(og_price)
+            product["currency"] = (
+                metadata.get("og:price:currency")
+                or metadata.get("product:price:currency")
+                or metadata.get("twitter:label1")
+            )
+            if isinstance(product["currency"], str):
+                product["currency"] = product["currency"].upper().strip()
 
-            product["stock_status"] = "unknown"
-            text = (result.get("markdown") or "").lower()
-            if "add to cart" in text or "add to bag" in text or "in stock" in text:
+            text_l = markdown.lower()
+            if "add to cart" in text_l or "add to bag" in text_l or "in stock" in text_l:
                 product["stock_status"] = "in_stock"
-            elif "out of stock" in text or "sold out" in text:
+            elif "out of stock" in text_l or "sold out" in text_l:
                 product["stock_status"] = "out_of_stock"
 
-            product["source"] = "opengraph"
-            return product
+            if product["current_price"] is not None:
+                product["source"] = "opengraph"
+                product["scrape_confidence"] = "high"
+                return product
 
-        # Fallback path: weak HTML/text signals
-        text = result.get("markdown") or result.get("text") or ""
-        metadata = result.get("metadata", {})
+        product["product_name"] = product["product_name"] or metadata.get("og:title") or metadata.get("title")
+        product["image_url"] = product["image_url"] or metadata.get("og:image") or metadata.get("image")
 
-        if metadata:
-            product["product_name"] = metadata.get("og:title") or metadata.get("title")
-            product["image_url"] = metadata.get("og:image") or metadata.get("image")
-
-        text_lower = text.lower()
+        text_lower = markdown.lower()
         if "add to cart" in text_lower or "add to bag" in text_lower or "in stock" in text_lower:
             product["stock_status"] = "in_stock"
         elif "out of stock" in text_lower or "sold out" in text_lower:
             product["stock_status"] = "out_of_stock"
 
-        if product["current_price"] is None and text:
-            price_match = re.search(
-                r'(?:CA|AU|US)?([\$£€¥₹])\s*([\d,]+(?:\.\d{2})?)'
-                r'|(USD|EUR|GBP|INR|CAD|AUD)\s+([\d,]+(?:\.\d{2})?)'
-                r'|([\d,]+(?:\.\d{2})?)\s*(USD|EUR|GBP|INR|CAD|AUD)',
-                text,
-                re.IGNORECASE,
-            )
-            if price_match:
-                sym = price_match.group(1) or price_match.group(3) or price_match.group(6)
-                val_str = price_match.group(2) or price_match.group(4) or price_match.group(5)
-                if val_str:
-                    val_str = val_str.replace(',', '')
-                    try:
-                        product["current_price"] = float(val_str)
-                        if sym:
-                            product["currency"] = sym.upper()
-                    except ValueError:
-                        pass
+        if product["current_price"] is None and markdown:
+            parsed_price, parsed_currency = self._extract_price_currency_from_text(markdown)
+            product["current_price"] = parsed_price
+            product["currency"] = product["currency"] or parsed_currency
+        elif product["current_price"] is not None and not product["currency"]:
+            _, parsed_currency = self._extract_price_currency_from_text(markdown)
+            product["currency"] = parsed_currency
+
+        if not product["product_name"]:
+            product["product_name"] = self._fallback_name_from_url(product_url)
 
         if product.get("current_price") is not None:
             product["source"] = "markdown_fallback"

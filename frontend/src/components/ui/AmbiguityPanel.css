@@ -1,9 +1,9 @@
 .ambiguity-panel {
-  background: var(--bg-surface-1);
-  border: 1px solid var(--border);
+  background: #0A0A0A;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-left: 3px solid var(--warning);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   padding: var(--space-4);
   animation: fadeInUp 0.3s ease-out;
 }

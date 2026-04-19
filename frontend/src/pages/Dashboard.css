@@ -1,7 +1,8 @@
 .dashboard {
   min-height: 100vh;
-  background: var(--bg-base);
   position: relative;
+  z-index: 1;
+  background: transparent;
 }
 
 .dashboard__main {
@@ -17,7 +18,7 @@
   display: grid;
   grid-template-columns: 320px 1fr;
   gap: var(--space-6);
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 /* ============================================
@@ -29,20 +30,20 @@
 }
 
 .dashboard__sidebar-inner {
-  background: var(--bg-surface-1);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: var(--radius-card);
+  background: #0A0A0A;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
   padding: var(--space-4);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .dashboard__sidebar-title {
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
+  color: #A1A1AA;
   margin-bottom: var(--space-4);
   padding-bottom: var(--space-3);
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
@@ -96,28 +97,46 @@
   background: rgba(248, 113, 113, 0.2);
 }
 
+/* TOP ZONE */
+.dashboard__top-bar {
+  height: 52px;
+  background: #0A0A0A;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 10;
+}
+
+.dashboard__product-id-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #FAFAFA;
+}
+
+.dashboard__btn-primary {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  box-shadow: 0 0 24px -6px rgba(16,185,129,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+  color: #fff;
+  padding: 8px 24px;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: transform 0.1s, box-shadow 0.2s;
+}
+
+.dashboard__btn-primary:hover {
+  box-shadow: 0 0 32px -4px rgba(16,185,129,0.6), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
 /* ============================================
    RIGHT MAIN AREA (RESULTS)
    ============================================ */
 .dashboard__content {
-  min-width: 0; /* Enable truncation/flex boundaries */
-}
-
-.dashboard__content-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-4);
-  padding-bottom: var(--space-3);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-.dashboard__product-name {
-  font-family: var(--font-sans);
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
+  min-width: 0;
 }
 
 .dashboard__results-grid {
@@ -126,42 +145,83 @@
   gap: var(--space-4);
 }
 
-.dashboard__hero-row {
+.dashboard__upper-split {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+.dashboard__main-zone {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
-.dashboard__stats-row {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: var(--space-2);
+.dashboard__side-zone {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
-.dashboard__insights-row {
+.dashboard__stats-grid {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: var(--space-3);
+  align-items: stretch;
+}
+
+.dashboard__lower-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+.dashboard__ring-card {
+  background: #0A0A0A;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: var(--space-6);
+  box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  height: 100%;
 }
 
 /* Common Section & Cards */
 .dashboard__section-label {
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
+  letter-spacing: 0.08em;
+  color: #A1A1AA;
   margin-bottom: var(--space-3);
 }
 
 .dashboard__chart-card,
 .dashboard__table-card {
-  background: var(--bg-surface-1);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: var(--radius-card);
+  background: #0A0A0A;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
   padding: var(--space-4);
   height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  min-height: 380px;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard__chart-container {
+  min-height: 380px;
+  height: 100%;
+  overflow: visible;
 }
 
 .dashboard__table-card {

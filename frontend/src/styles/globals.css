@@ -38,7 +38,7 @@
   --glass-bg-strong: rgba(10,10,10,0.8);
 
   /* Shadows */
-  --shadow-card: inset 0 1px 0 rgba(255,255,255,0.05);
+  --shadow-card: 0 4px 24px -8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
   --shadow-elevated: 0 8px 32px rgba(0,0,0,0.6);
   --shadow-glow: 0 0 32px -8px var(--accent-glow);
   --shadow-navbar: 0 4px 24px rgba(0,0,0,0.5);
@@ -60,7 +60,7 @@
 
   /* Radius (PRD §2.4) */
   --radius-card: 16px;
-  --radius-btn: 8px;
+  --radius-btn: 99px;
   --radius-pill: 999px;
   --radius-input: 12px;
   --radius-navbar: 16px;
@@ -82,17 +82,20 @@ html {
 }
 
 body {
-  background-color: var(--bg-base);
+  background: #050505;
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 15px;
   line-height: 1.6;
   min-height: 100vh;
+  position: relative;
   overflow-x: hidden;
 }
 
 #root {
   min-height: 100vh;
+  position: relative;
+  background: #050505;
 }
 
 a {
@@ -124,7 +127,13 @@ input, textarea {
 
 input:focus, textarea:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-muted);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.btn-primary-pill {
+  border-radius: 99px;
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  box-shadow: 0 0 24px -6px rgba(16,185,129,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
 }
 
 input::placeholder, textarea::placeholder {

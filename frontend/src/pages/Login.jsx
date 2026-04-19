@@ -17,8 +17,8 @@ export default function Login() {
 
   return (
     <div className="login-page">
+      <BackgroundPaths variant="login" intensity={0.5} />
       <Navbar />
-      <BackgroundPaths intensity={0.8} />
       <div className="login-page__center">
         <motion.div
           className="login-card"

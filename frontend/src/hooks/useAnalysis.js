@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { postAnalyze, postDiscoverCompetitors } from '../lib/api';
 
+// ── Mock data for offline / demo mode ──
 const MOCK_RESULT = {
   product_id: 'sneaker-x1-pro',
   my_price: 1499.0,
@@ -51,15 +52,19 @@ const MOCK_RESULT = {
 /**
  * useAnalysis — React Query–powered hook for pricing analysis.
  *
- * Uses `useMutation` because the /analyze endpoint is a POST action.
+ * Uses `useMutation` because the /analyze endpoint is inherently
+ * a POST action (mutations), not a cacheable query.
+ *
  * Falls back to mock data when VITE_USE_MOCK !== 'false'.
  */
 export function useAnalysis() {
   const useMock = import.meta.env.VITE_USE_MOCK !== 'false';
 
+  // Mutation backed by React Query
   const mutation = useMutation({
     mutationFn: async ({ myProductUrl, competitorUrls }) => {
       if (useMock) {
+        // Simulate network latency for demo mode
         await new Promise((resolve) => setTimeout(resolve, 5000));
         return MOCK_RESULT;
       }
@@ -100,6 +105,7 @@ export function useAnalysis() {
     },
   });
 
+  // Convenience wrappers matching the original API surface
   const analyzeProduct = useCallback(
     (myProductUrl, competitorUrls) => {
       mutation.mutate({ myProductUrl, competitorUrls });
@@ -118,6 +124,7 @@ export function useAnalysis() {
     mutation.reset();
   }, [mutation]);
 
+  // Derive a simple status label
   let status = 'idle';
   if (mutation.isPending) status = 'running';
   else if (mutation.isSuccess) status = 'complete';
@@ -133,5 +140,6 @@ export function useAnalysis() {
     discoverCompetitors,
     discoverLoading: discoveryMutation.isPending,
     discoverError: discoveryMutation.error?.message ?? null,
+    discoveryResult: discoveryMutation.data ?? null,
   };
 }

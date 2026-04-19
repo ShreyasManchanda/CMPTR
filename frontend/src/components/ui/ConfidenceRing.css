@@ -1,0 +1,25 @@
+.confidence-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.confidence-ring__svg-text {
+  font-family: 'Geist Mono', monospace;
+  font-size: 24px;
+  font-weight: 600;
+  fill: #fafafa;
+}
+
+.confidence-ring__label {
+  margin-top: 12px;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}

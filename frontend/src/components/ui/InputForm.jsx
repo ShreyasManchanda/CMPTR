@@ -23,7 +23,9 @@ export default function InputForm({
   return (
     <form className="input-form" onSubmit={handleSubmit}>
       <div className="input-form__group">
-        <label className="input-form__label" htmlFor="product-url">My product URL</label>
+        <label className="input-form__label" htmlFor="product-url">
+          My product URL
+        </label>
         <input
           id="product-url"
           type="url"
@@ -35,11 +37,13 @@ export default function InputForm({
       </div>
 
       <div className="input-form__group">
-        <label className="input-form__label" htmlFor="competitor-urls">Competitor store URLs</label>
+        <label className="input-form__label" htmlFor="competitor-urls">
+          Competitor store URLs
+        </label>
         <textarea
           id="competitor-urls"
           rows={4}
-          placeholder={"https://competitor1.com\nhttps://competitor2.com"}
+          placeholder={'https://competitor1.com\nhttps://competitor2.com'}
           value={competitorUrls}
           onChange={(e) => onCompetitorChange(e.target.value)}
         />
@@ -52,7 +56,7 @@ export default function InputForm({
         onClick={() => onDiscover(productUrl)}
         disabled={discovering || !productUrl}
       >
-        {discovering ? 'Finding competitors…' : 'Find competitors'}
+        {discovering ? 'Finding competitors...' : 'Find competitors'}
       </button>
 
       {suggestions?.length > 0 && (
@@ -65,14 +69,13 @@ export default function InputForm({
                 checked={!!selectedSuggestions[suggestion.url]}
                 onChange={() => onToggleSuggestion(suggestion.url)}
               />
-              <span>{suggestion.store || suggestion.url}</span>
+              <div className="input-form__suggestion-copy">
+                <span className="input-form__suggestion-store">{suggestion.store || 'Suggested Store'}</span>
+                <span className="input-form__suggestion-url">{suggestion.url}</span>
+              </div>
             </label>
           ))}
-          <button
-            type="button"
-            className="input-form__tertiary"
-            onClick={onAddSelected}
-          >
+          <button type="button" className="input-form__tertiary" onClick={onAddSelected}>
             Add selected to competitor list
           </button>
         </div>

@@ -163,7 +163,6 @@ export default function LandingPage() {
                   ))}
                 </span>
               ))}
-              {part.accent && <em className="sr-only"> (emphasized) </em>}
             </span>
           ))}
         </motion.span>
@@ -173,8 +172,8 @@ export default function LandingPage() {
 
   return (
     <div className="landing">
+      <BackgroundPaths variant="home" intensity={0.95} />
       <Navbar />
-      <BackgroundPaths intensity={0.95} />
       <section className="hero">
 
         {/* existing hero content follows (kept for clarity) */}

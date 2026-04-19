@@ -1,70 +1,59 @@
-import ConfidenceBar from './ConfidenceBar';
 import './RecommendationCard.css';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 const ACTION_CONFIG = {
-  REDUCE: { color: 'var(--accent)', label: 'REDUCE PRICE' },
-  HOLD: { color: 'var(--text-secondary)', label: 'HOLD STEADY' },
-  MANUAL_REVIEW: { color: 'var(--warning)', label: 'NEEDS REVIEW' },
+  REDUCE: { color: 'var(--accent)', label: 'REDUCE' },
+  INCREASE: { color: 'var(--accent)', label: 'INCREASE' },
+  MAINTAIN: { color: 'var(--accent)', label: 'MAINTAIN' },
+  NO_CHANGE: { color: 'var(--accent)', label: 'MAINTAIN' },
+  HOLD: { color: 'var(--accent)', label: 'MAINTAIN' },
+  MANUAL_REVIEW: { color: 'var(--warning)', label: 'MANUAL REVIEW' },
 };
 
 export default function RecommendationCard({ action, suggestedPrice, currentPrice, confidence, policyReason, currency = '₹' }) {
   if (!action) return null;
 
   const key = action.toUpperCase().replace(' ', '_');
-  const config = ACTION_CONFIG[key] || ACTION_CONFIG.HOLD;
-  const shouldReduce = useReducedMotion();
-  const hoverProps = shouldReduce ? {} : { whileHover: { y: -4 }, whileTap: { scale: 0.985 }, transition: { type: 'spring', stiffness: 300, damping: 26 } };
+  const config = ACTION_CONFIG[key] || { color: 'var(--accent)', label: action.toUpperCase() };
+  
+  const isDynamicAction = ['REDUCE', 'INCREASE'].includes(key);
 
   return (
-    <motion.div className="rec-hero" style={{ '--action-color': config.color }} {...hoverProps} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
-       <div className="rec-hero__inner">
-         
-         <div className="rec-hero__top-row">
-            <div className="rec-hero__action-text" style={{ color: config.color }}>
-              {config.label.split(' ').map((word, i) => (
-                <div key={i}>{word}</div>
-              ))}
-            </div>
+    <motion.div 
+      className={`recommendation-card ${isDynamicAction ? 'recommendation-card--pulse' : ''}`}
+      variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+    >
+      <div className="recommendation-card__header">
+        <div className="recommendation-card__badge">
+          {config.label}
+        </div>
+        <div className="recommendation-card__policy-label">
+          allowed_by_policy
+        </div>
+      </div>
 
-            <div className="rec-hero__price-block">
-               {suggestedPrice != null ? (
-                 <div className="rec-hero__suggested" style={{ color: config.color }}>
-                   <span className="rec-hero__currency">{currency}</span>
-                   <span className="rec-hero__value">{Number(suggestedPrice).toLocaleString()}</span>
-                 </div>
-               ) : (
-                 <div className="rec-hero__suggested" style={{ color: config.color }}>
-                   <span className="rec-hero__value">Analyze</span>
-                 </div>
-               )}
-               
-               {currentPrice != null && (
-                  <div className="rec-hero__current">
-                     <span className="rec-hero__current-label">Current Strategy:</span>
-                     <span className="rec-hero__current-val">{currency}{Number(currentPrice).toLocaleString()}</span>
-                  </div>
-               )}
-            </div>
-         </div>
-
-         <div className="rec-hero__bottom-row">
-            {policyReason ? (
-              <div className="rec-hero__reason">{policyReason}</div>
-            ) : <div />}
-            
-            <div className="rec-hero__confidence-wrap">
-              <div className="rec-hero__conf-header">
-                <span className="rec-hero__conf-label">Decision Confidence</span>
-                <span className="rec-hero__conf-val" style={{ color: config.color }}>
-                  {Math.round((confidence || 0) * 100)}%
-                </span>
-              </div>
-              <ConfidenceBar score={confidence || 0} showLabel={false} />
-            </div>
-         </div>
-
-       </div>
+      <div className="recommendation-card__content">
+        <div className="recommendation-card__price-wrapper">
+          <div className="recommendation-card__price">
+            {currency}{(suggestedPrice ?? currentPrice ?? 0).toLocaleString()}
+          </div>
+          <div className="recommendation-card__meta">
+            Currently {currency}{Number(currentPrice).toLocaleString()}
+            {suggestedPrice != null && currentPrice != null && Number(suggestedPrice) !== Number(currentPrice) && (
+              <> · {Number(suggestedPrice) < Number(currentPrice) ? 'Save' : 'Increase'} {Math.abs(Math.round((1 - Number(suggestedPrice) / Number(currentPrice)) * 100))}%</>
+            )}
+          </div>
+          <div className="recommendation-card__strategy">
+            CURRENT STRATEGY: <span className="strikethrough">{currency}{Number(currentPrice).toLocaleString()}</span>
+          </div>
+        </div>
+        
+        {policyReason && (
+          <div className="recommendation-card__reason">
+             {policyReason}
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }

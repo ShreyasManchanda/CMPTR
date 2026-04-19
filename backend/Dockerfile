@@ -16,8 +16,7 @@ RUN apt-get update \
 # Copy only the requirements first to cache them in docker
 COPY requirements.txt .
 
-# Install python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --default-timeout=1000 --no-cache-dir -r requirements.txt
 
 # Copy the rest of the backend code into the container
 COPY . .

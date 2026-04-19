@@ -1,23 +1,29 @@
 .trend-chart {
-  margin-top: var(--space-2);
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  overflow: visible;
+  box-sizing: border-box;
+  position: relative;
 }
 
 .trend-tooltip {
-  background: var(--bg-surface-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-btn);
+  background: rgba(10,10,10,0.95);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
   padding: 8px 12px;
-  box-shadow: var(--shadow-elevated);
 }
 
 .trend-tooltip__store {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-bottom: 2px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  color: #A1A1AA;
+  margin-bottom: 4px;
 }
 
 .trend-tooltip__price {
-  font-family: var(--font-mono);
-  font-size: 14px;
-  color: var(--text-primary);
+  font-family: 'Geist Mono', monospace;
+  font-size: 13px;
+  color: #10B981;
+  font-weight: 600;
 }

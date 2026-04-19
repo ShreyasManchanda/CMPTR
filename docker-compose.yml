@@ -14,6 +14,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # The FastAPI Backend
   api:
@@ -30,7 +35,8 @@ services:
       # Explicitly tell the API to connect to the 'db' service above
       DATABASE_URL: postgresql://postgres:1234@db:5432/cmpt_db
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       # Mount the backend directory so you don't have to rebuild docker on every code change
       - ./backend:/app
