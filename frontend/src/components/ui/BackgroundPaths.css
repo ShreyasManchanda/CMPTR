@@ -1,0 +1,47 @@
+/* ==========================================================================
+   BackgroundPaths.css — Wave path animation styles
+   ========================================================================== */
+
+.bgpaths {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1; /* behind hero content (z-index: 2) */
+  transition: opacity 0.8s ease;
+}
+
+.bgpaths__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.bgpaths__path {
+  vector-effect: non-scaling-stroke;
+  transition: stroke 0.5s ease, stroke-width 0.3s ease;
+}
+
+/* Animations */
+@keyframes bg-drift {
+  0% {
+    transform: rotate(0deg) scale(1) translate(0, 0);
+  }
+  50% {
+    transform: rotate(3deg) scale(1.05) translate(-10px, 15px);
+  }
+  100% {
+    transform: rotate(0deg) scale(1) translate(0, 0);
+  }
+}
+
+/* Contrast enhancement modifier */
+.bgpaths--contrast {
+  filter: contrast(1.1) saturate(1.1);
+}
+
+.bgpaths--strong .bgpaths__path--bright {
+  stroke-width: 2.5px;
+}
