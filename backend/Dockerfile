@@ -24,5 +24,5 @@ COPY . .
 # Expose port 8000
 EXPOSE 8000
 
-# Run the FastAPI application connected to all host IPs
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Run the FastAPI application using shell execution to dynamically bind to the PORT environment variable passed by Render/hosting providers (default to 8000)
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
