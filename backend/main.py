@@ -3,16 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 from datetime import datetime
-import logging
 
 # Import our custom modules
 from orchestrator import PricingOrchestrator
-import db as db_module
-from db import PricingDecision, CompetitorPrice
+from db import init_db, SessionLocal, PricingDecision, CompetitorPrice
 from scraper.crawler import Crawler
 from scraper.scraper import Scraper
-
-logger = logging.getLogger(__name__)
 
 # --- STEP 1: App Setup and Initialization ---
 app = FastAPI(
@@ -25,11 +21,7 @@ app = FastAPI(
 # Allow the frontend dev server and common deployment origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",       # Vite default dev server
-        "http://localhost:3000",       # Alternate dev server
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -41,8 +33,7 @@ orchestrator = PricingOrchestrator()
 @app.on_event("startup")
 def startup_event():
     # This automatically creates our PostgreSQL tables if they don't exist yet!
-    db_module.init_db()
-    db_module.verify_db_connection()
+    init_db()
 
 
 # --- STEP 2: Health Check ---
@@ -58,10 +49,7 @@ def get_db():
     This is a FastAPI dependency. It opens a database session for each 
     request, and safely closes it when the request is done.
     """
-    if db_module.SessionLocal is None:
-        raise RuntimeError("SessionLocal is not initialized. Check DATABASE_URL and startup initialization.")
-
-    db = db_module.SessionLocal()
+    db = SessionLocal()
     try:
         yield db
     finally:
@@ -157,19 +145,16 @@ def discover_competitors(request: DiscoverRequest):
     product_url = request.get_product_url()
     if not product_url:
         raise HTTPException(status_code=422, detail="Product URL is required.")
-    logger.info(f"/discover-competitors called with product_url={product_url}")
 
     scraper = Scraper()
     raw_product = scraper.scrape_product(product_url)
     product_name = raw_product.get("product_name")
-    logger.info(f"Derived product_name='{product_name}' from URL")
 
     if not product_name:
         raise HTTPException(status_code=400, detail="Could not determine the product name from the provided URL.")
 
     crawler = Crawler()
     suggestions = crawler.discover_competitor_stores(product_name, max_results=6)
-    logger.info(f"Discovery returned {len(suggestions)} suggestions")
 
     if not suggestions:
         raise HTTPException(status_code=404, detail="No competitor stores could be discovered for this product.")
@@ -179,9 +164,3 @@ def discover_competitors(request: DiscoverRequest):
         "product_name": product_name,
         "suggestions": suggestions
     }
-
-
-@app.post("/discover_competitors")
-def discover_competitors_compat(request: DiscoverRequest):
-    """Backward-compatible alias for clients using underscore route."""
-    return discover_competitors(request)
