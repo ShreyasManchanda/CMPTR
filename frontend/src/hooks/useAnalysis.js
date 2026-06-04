@@ -58,7 +58,7 @@ const MOCK_RESULT = {
  * Falls back to mock data when VITE_USE_MOCK !== 'false'.
  */
 export function useAnalysis() {
-  const useMock = import.meta.env.VITE_USE_MOCK !== 'false';
+  const useMock = import.meta.env.VITE_USE_MOCK === 'true';
 
   // Mutation backed by React Query
   const mutation = useMutation({
