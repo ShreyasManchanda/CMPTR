@@ -106,7 +106,7 @@ class Scraper:
     def scrape_product(self, product_url: str) -> dict:
         product = {
             "product_url": product_url,
-            "product_name": None,
+            "product_name": self._fallback_name_from_url(product_url),
             "current_price": None,
             "old_price": None,
             "currency": None,
