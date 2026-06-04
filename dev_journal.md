@@ -8,3 +8,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Mobile layout needs a responsive pass on the dashboard cards
 - Framer Motion transitions: spring damping tweaked for smoother feel
 
+### 2026-06-04 15:22 — Database Notes
+- PostgreSQL query time: ~1142ms avg
+- 6 analysis records in DB
+- Connection pool stable
+
