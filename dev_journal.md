@@ -66,3 +66,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - CORS headers set for Vercel frontend
 - Railway PORT injection confirmed
 
+### 2026-06-08 20:30 — Frontend Notes
+- React Query stale time: 60s
+- Recharts renders up to 11 competitor data points
+- Mobile layout pass needed on dashboard cards
+
