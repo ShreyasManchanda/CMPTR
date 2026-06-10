@@ -81,3 +81,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Recharts renders up to 12 competitor data points
 - Mobile layout pass needed on dashboard cards
 
+### 2026-06-10 14:57 — Pricing Engine Notes
+- Market median verified against manual spot-checks
+- Rules engine withheld recommendation below 77% confidence
+- Explanation avg length: 90 words
+
