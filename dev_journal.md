@@ -126,3 +126,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Ambiguity agent flagged promotional pricing in 8 cases
 - Confidence threshold at 79%
 
+### 2026-06-14 14:00 — Database Notes
+- PostgreSQL query time: ~1591ms avg
+- 6 analysis records in DB
+- Connection pool stable
+
