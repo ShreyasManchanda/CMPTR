@@ -136,3 +136,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - CORS headers set for Vercel frontend
 - Railway PORT injection confirmed
 
+### 2026-06-15 10:57 — Agent Notes
+- Gemini explanation quality: consistent for clear price gaps
+- Ambiguity agent flagged promotional pricing in 7 cases
+- Confidence threshold at 70%
+
