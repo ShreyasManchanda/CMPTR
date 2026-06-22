@@ -222,3 +222,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Rules engine withheld recommendation below 87% confidence
 - Explanation avg length: 84 words
 
+### 2026-06-22 21:15 — Pricing Engine Notes
+- Market median verified against manual spot-checks
+- Rules engine withheld recommendation below 71% confidence
+- Explanation avg length: 53 words
+
