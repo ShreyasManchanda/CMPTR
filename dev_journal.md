@@ -237,3 +237,9 @@ Ongoing development notes, observations, and pipeline metrics.
 - Rules engine withheld recommendation below 83% confidence
 - Explanation avg length: 63 words
 
+### 2026-06-23 20:30 — Pipeline Health Check
+- Scraper ran on 6 test URLs
+- Normalizer handled 2 currencies
+- Ambiguity agent triggered 22% of the time
+- Avg latency: 1790ms
+
