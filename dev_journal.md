@@ -258,3 +258,9 @@ Ongoing development notes, observations, and pipeline metrics.
 - CORS headers set for Vercel frontend
 - Railway PORT injection confirmed
 
+### 2026-06-25 09:14 — Pipeline Health Check
+- Scraper ran on 11 test URLs
+- Normalizer handled 2 currencies
+- Ambiguity agent triggered 36% of the time
+- Avg latency: 914ms
+
