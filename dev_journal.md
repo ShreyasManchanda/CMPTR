@@ -270,3 +270,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Ambiguity agent triggered 27% of the time
 - Avg latency: 893ms
 
+### 2026-06-25 20:30 — Agent Notes
+- Gemini explanation quality: consistent for clear price gaps
+- Ambiguity agent flagged promotional pricing in 7 cases
+- Confidence threshold at 71%
+
