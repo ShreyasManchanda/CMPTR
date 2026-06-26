@@ -275,3 +275,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Ambiguity agent flagged promotional pricing in 7 cases
 - Confidence threshold at 71%
 
+### 2026-06-26 10:07 — Pricing Engine Notes
+- Market median verified against manual spot-checks
+- Rules engine withheld recommendation below 78% confidence
+- Explanation avg length: 46 words
+
