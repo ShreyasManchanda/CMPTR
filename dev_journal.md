@@ -290,3 +290,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Rules engine withheld recommendation below 81% confidence
 - Explanation avg length: 48 words
 
+### 2026-06-27 12:12 — Agent Notes
+- Gemini explanation quality: consistent for clear price gaps
+- Ambiguity agent flagged promotional pricing in 11 cases
+- Confidence threshold at 81%
+
