@@ -331,3 +331,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - 10 analysis records in DB
 - Connection pool stable
 
+### 2026-06-30 21:10 — Frontend Notes
+- React Query stale time: 120s
+- Recharts renders up to 8 competitor data points
+- Mobile layout pass needed on dashboard cards
+
