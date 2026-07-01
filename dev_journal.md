@@ -346,3 +346,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Markdown fallback triggered for 1 stores
 - Firecrawl avg latency: 1248ms per page
 
+### 2026-07-01 20:30 — Frontend Notes
+- React Query stale time: 60s
+- Recharts renders up to 10 competitor data points
+- Mobile layout pass needed on dashboard cards
+
