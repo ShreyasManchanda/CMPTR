@@ -382,3 +382,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Recharts renders up to 5 competitor data points
 - Mobile layout pass needed on dashboard cards
 
+### 2026-07-04 14:00 — Frontend Notes
+- React Query stale time: 30s
+- Recharts renders up to 4 competitor data points
+- Mobile layout pass needed on dashboard cards
+
