@@ -387,3 +387,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Recharts renders up to 4 competitor data points
 - Mobile layout pass needed on dashboard cards
 
+### 2026-07-04 14:05 — Crawler Notes
+- JSON-LD extraction success: ~76%
+- Markdown fallback triggered for 1 stores
+- Firecrawl avg latency: 1642ms per page
+
