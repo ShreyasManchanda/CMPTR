@@ -417,3 +417,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Markdown fallback triggered for 4 stores
 - Firecrawl avg latency: 1979ms per page
 
+### 2026-07-06 14:00 — Crawler Notes
+- JSON-LD extraction success: ~95%
+- Markdown fallback triggered for 3 stores
+- Firecrawl avg latency: 1853ms per page
+
