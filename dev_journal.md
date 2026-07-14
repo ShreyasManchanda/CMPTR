@@ -509,3 +509,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Recharts renders up to 7 competitor data points
 - Mobile layout pass needed on dashboard cards
 
+### 2026-07-14 20:30 — Deployment Notes
+- Backend Docker image builds cleanly
+- CORS headers set for Vercel frontend
+- Railway PORT injection confirmed
+
