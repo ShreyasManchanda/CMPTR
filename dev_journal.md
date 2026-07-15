@@ -525,3 +525,9 @@ Ongoing development notes, observations, and pipeline metrics.
 - Ambiguity agent triggered 25% of the time
 - Avg latency: 1211ms
 
+### 2026-07-15 20:30 — Pipeline Health Check
+- Scraper ran on 8 test URLs
+- Normalizer handled 3 currencies
+- Ambiguity agent triggered 24% of the time
+- Avg latency: 1303ms
+
