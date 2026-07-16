@@ -541,3 +541,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - 6 analysis records in DB
 - Connection pool stable
 
+### 2026-07-16 20:30 — Crawler Notes
+- JSON-LD extraction success: ~92%
+- Markdown fallback triggered for 4 stores
+- Firecrawl avg latency: 1333ms per page
+
