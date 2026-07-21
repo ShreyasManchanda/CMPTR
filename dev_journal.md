@@ -566,3 +566,9 @@ Ongoing development notes, observations, and pipeline metrics.
 - Ambiguity agent flagged promotional pricing in 8 cases
 - Confidence threshold at 90%
 
+### 2026-07-21 15:16 — Pipeline Health Check
+- Scraper ran on 4 test URLs
+- Normalizer handled 4 currencies
+- Ambiguity agent triggered 34% of the time
+- Avg latency: 2021ms
+
