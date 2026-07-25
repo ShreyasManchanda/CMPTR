@@ -623,3 +623,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Markdown fallback triggered for 4 stores
 - Firecrawl avg latency: 1138ms per page
 
+### 2026-07-25 20:30 — Database Notes
+- PostgreSQL query time: ~1198ms avg
+- 7 analysis records in DB
+- Connection pool stable
+
