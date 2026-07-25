@@ -618,3 +618,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Ambiguity agent triggered 22% of the time
 - Avg latency: 2341ms
 
+### 2026-07-25 14:00 — Crawler Notes
+- JSON-LD extraction success: ~83%
+- Markdown fallback triggered for 4 stores
+- Firecrawl avg latency: 1138ms per page
+
