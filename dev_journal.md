@@ -701,3 +701,9 @@ Ongoing development notes, observations, and pipeline metrics.
 - 3 analysis records in DB
 - Connection pool stable
 
+### 2026-08-01 20:30 — Pipeline Health Check
+- Scraper ran on 5 test URLs
+- Normalizer handled 4 currencies
+- Ambiguity agent triggered 32% of the time
+- Avg latency: 1017ms
+
