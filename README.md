@@ -21,6 +21,8 @@ Most pricing tools give you raw competitor data and leave interpretation to you.
 
 You paste a product URL and competitor store links. The system crawls competitor listings, normalises the pricing data across inconsistent formats, passes it through a deterministic pricing engine + LLM explanation layer, and returns a report with a **recommended action, confidence score, and plain-language explanation**.
 
+[![Watch the demo](https://img.youtube.com/vi/YFavsu_Qcuo/maxresdefault.jpg)](https://youtu.be/YFavsu_Qcuo)
+
 ---
 
 ## Architecture
@@ -175,7 +177,6 @@ Aliases accepted on analyze/discover bodies: `my_product_url` ↔ `product_url`,
 ```
 
 Interactive docs: **http://localhost:8000/docs**
-
 ---
 
 *Built by [Shreyas Manchanda](https://github.com/ShreyasManchanda)*
