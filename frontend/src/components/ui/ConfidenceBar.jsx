@@ -6,10 +6,10 @@ export default function ConfidenceBar({ score, showLabel = true }) {
 
   return (
     <div className="confidence-bar">
-      <div className="confidence-bar__track">
+      <div className="confidence-bar__track" role="progressbar" aria-valuenow={percentage} aria-valuemin={0} aria-valuemax={100} aria-label="Confidence">
         <div
           className={`confidence-bar__fill ${isHigh ? 'confidence-bar__fill--high' : 'confidence-bar__fill--medium'}`}
-          style={{ width: `${percentage}%` }}
+          style={{ transform: `scaleX(${Math.max(0, Math.min(percentage, 100)) / 100})` }}
         />
       </div>
       {showLabel && (

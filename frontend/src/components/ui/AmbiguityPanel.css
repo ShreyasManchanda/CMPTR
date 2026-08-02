@@ -1,11 +1,10 @@
 .ambiguity-panel {
-  background: #0A0A0A;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-left: 3px solid var(--warning);
+  background: var(--bg-surface-1);
+  border: 1px solid rgba(245, 158, 11, 0.35);
   border-radius: 16px;
   box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   padding: var(--space-4);
-  animation: fadeInUp 0.3s ease-out;
+  animation: fadeInUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .ambiguity-panel__header {
@@ -14,4 +13,32 @@
   font-weight: 600;
   color: var(--warning);
   margin-bottom: var(--space-2);
+}
+
+.ambiguity-panel__action {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+  text-transform: capitalize;
+}
+
+.ambiguity-panel__confidence {
+  color: var(--text-secondary);
+  font-weight: 400;
+  text-transform: none;
+}
+
+.ambiguity-panel__reasoning {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambiguity-panel {
+    animation: none;
+  }
 }

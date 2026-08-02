@@ -40,6 +40,12 @@
   transform: translateY(-1px);
 }
 
+.input-form__submit:active:not(:disabled),
+.input-form__secondary:active:not(:disabled),
+.input-form__tertiary:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
 .input-form__secondary,
 .input-form__tertiary {
   background: transparent;

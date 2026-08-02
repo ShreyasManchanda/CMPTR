@@ -50,12 +50,18 @@ def test_crawler_logic():
     header("Crawler Query Generation & Result Accumulation")
     crawler = Crawler()
     try:
-        # Test Query Gen
-        queries = crawler._get_search_queries("Stüssy Plaid Shirt")
-        print(f"Generated Queries: {queries}")
-        
-        # Test Search (requires API key)
-        if os.getenv("FIRECRAWL_API_KEY"):
+        # Test peer brand context (requires API key for live Gemini)
+        if os.getenv("FIRECRAWL_API_KEY") and os.getenv("GEMINI_API_KEY"):
+            ctx = crawler._get_peer_brand_context(
+                "Stussy",
+                "Faded Graphic Zip Hoodie",
+                merchant_price=150,
+                currency="USD",
+                merchant_domain="stussy.com",
+            )
+            print(f"Peer context: {ctx}")
+            if ctx.get("peer_brands"):
+                print(f"{GREEN}[PASS]{RESET} Peer brand context generated.")
             links = crawler.find_competitor_product("champion.com", "Reverse Weave Hoodie", max_results=2)
             print(f"Found Links: {links}")
             if len(links) > 0:

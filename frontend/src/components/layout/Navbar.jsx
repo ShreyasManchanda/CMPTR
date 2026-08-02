@@ -11,6 +11,19 @@ export default function Navbar() {
   const lastY = useRef(0);
 
   useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setMobileOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mobileOpen]);
+
+  useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
       setScrolled(y > 10);
@@ -31,7 +44,10 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className={`navbar ${scrolled ? 'navbar--scrolled' : ''} ${hidden ? 'navbar--hidden' : ''}`} aria-label="Main navigation">
+    <nav
+      className={`navbar ${scrolled ? 'navbar--scrolled' : ''} ${hidden ? 'navbar--hidden' : ''} ${mobileOpen ? 'navbar--menu-open' : ''}`}
+      aria-label="Main navigation"
+    >
       <div className="navbar__inner">
         <Link to="/" className="navbar__logo" aria-label="CMPT home">
           <span className="navbar__logo-word">CMPT</span>
@@ -40,12 +56,9 @@ export default function Navbar() {
 
         <div className="navbar__links">
           {isDashboard ? (
-            <>
-              <NavLink label="Overview" active />
-              <NavLink label="Runs" />
-              <NavLink label="Competitors" />
-              <NavLink label="Explain" />
-            </>
+            <span className="navbar__link navbar__link--active" aria-current="page">
+              Overview
+            </span>
           ) : (
             <>
               <a href="#how-it-works" className="navbar__link">How it works</a>
@@ -67,21 +80,22 @@ export default function Navbar() {
         </div>
 
         <button
-          className="navbar__hamburger"
+          type="button"
+          className={`navbar__hamburger ${mobileOpen ? 'navbar__hamburger--open' : ''}`}
           onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Toggle menu"
+          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={mobileOpen}
         >
           <span /><span /><span />
         </button>
       </div>
 
       {mobileOpen && (
-        <div className="navbar__mobile">
+        <div className="navbar__mobile" id="mobile-nav">
           {isDashboard ? (
-            <>
-              <Link to="/dashboard" className="navbar__mobile-link" onClick={() => setMobileOpen(false)}>Overview</Link>
-              <Link to="/dashboard" className="navbar__mobile-link" onClick={() => setMobileOpen(false)}>Runs</Link>
-            </>
+            <Link to="/dashboard" className="navbar__mobile-link" onClick={() => setMobileOpen(false)}>
+              Overview
+            </Link>
           ) : (
             <>
               <a href="#how-it-works" className="navbar__mobile-link" onClick={() => setMobileOpen(false)}>How it works</a>
@@ -93,11 +107,5 @@ export default function Navbar() {
         </div>
       )}
     </nav>
-  );
-}
-
-function NavLink({ label, active }) {
-  return (
-    <span className={`navbar__link ${active ? 'navbar__link--active' : ''}`}>{label}</span>
   );
 }

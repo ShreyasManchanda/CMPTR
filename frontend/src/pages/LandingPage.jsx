@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
@@ -8,95 +8,132 @@ import BackgroundPaths from '../components/ui/BackgroundPaths';
 import {
   Link as LinkIcon, Bot, LineChart, CheckCircle2,
   MessageSquareText, ShieldCheck, Activity, AlertTriangle,
-  ArrowRight, ChevronDown, Plus, Minus,
+  ArrowRight, Plus, Minus,
 } from 'lucide-react';
 import './LandingPage.css';
 
-/* ─── Scroll reveal (IntersectionObserver) ─── */
-function useReveal(opts = {}) {
+/* ─── Scroll reveal: visible by default; motion is progressive enhancement ─── */
+function useReveal() {
   const ref = useRef(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced || !('IntersectionObserver' in window)) {
+      el.classList.add('revealed');
+      return;
+    }
+
+    el.classList.add('reveal--ready');
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) el.classList.add('revealed'); },
-      { threshold: opts.threshold ?? 0.12, rootMargin: opts.rootMargin ?? '0px 0px -60px 0px' },
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add('revealed');
+          observer.unobserve(el);
+        }
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' },
     );
     observer.observe(el);
-    return () => observer.disconnect();
+
+    const fallback = window.setTimeout(() => el.classList.add('revealed'), 2500);
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(fallback);
+    };
   }, []);
   return ref;
 }
 
-function Reveal({ children, className = '', delay = 0, direction = 'up' }) {
+function Reveal({ children, className = '', delay = 0 }) {
   const ref = useReveal();
   return (
-    <div ref={ref} className={`reveal reveal--${direction} ${delay ? `reveal-d${delay}` : ''} ${className}`}>
+    <div
+      ref={ref}
+      className={`reveal ${delay ? `reveal-d${delay}` : ''} ${className}`}
+      style={delay ? { '--reveal-delay': `${delay * 70}ms` } : undefined}
+    >
       {children}
     </div>
   );
 }
 
-/* ─── Parallax wrapper — shifts content based on scroll ─── */
-function useParallax(speed = 0.08) {
-  const ref = useRef(null);
-  const onScroll = useCallback(() => {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const offset = (rect.top - window.innerHeight / 2) * speed;
-    el.style.transform = `translateY(${offset}px)`;
-  }, [speed]);
-  useEffect(() => {
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [onScroll]);
-  return ref;
+function AnimatedHeadline({ prefersReduced }) {
+  const lines = [
+    { parts: [{ text: 'Pricing intelligence', accent: false }] },
+    { parts: [{ text: 'that knows ', accent: false }, { text: 'when to act', accent: true }] },
+    { parts: [{ text: '- and when not to.', accent: false }] },
+  ];
+
+  if (prefersReduced) {
+    return (
+      <h1 className="hero__headline">
+        Pricing intelligence<br />
+        that knows <em className="hero__accent">when to act</em><br />
+        - and when not to.
+      </h1>
+    );
+  }
+
+  const lineVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: 0.08 + i * 0.1,
+        duration: 0.55,
+        ease: [0.16, 1, 0.3, 1],
+      },
+    }),
+  };
+
+  return (
+    <h1 className="hero__headline">
+      {lines.map((line, i) => (
+        <motion.span
+          key={i}
+          className="hero__headline-line"
+          custom={i}
+          variants={lineVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {line.parts.map((part, j) => (
+            <span key={j} className={part.accent ? 'hero__accent' : undefined}>
+              {part.text}
+            </span>
+          ))}
+        </motion.span>
+      ))}
+    </h1>
+  );
 }
 
-/* ════════════════════════════════════════════
-   LANDING PAGE
-   ════════════════════════════════════════════ */
 export default function LandingPage() {
-  const dashRef = useParallax(0.035);
   const prefersReduced = useReducedMotion();
 
-  /* GSAP hero & preview animations (desktop only, respects reduced-motion) */
   useEffect(() => {
     const mm = window.matchMedia('(min-width: 1024px)');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!mm.matches || reduced) return; // only run on desktop and when motion is allowed
+    if (!mm.matches || reduced) return;
 
     let ctx;
-    let gsapLib;
     (async () => {
       try {
         const gsapModule = await import('gsap');
         const ScrollTriggerModule = await import('gsap/ScrollTrigger');
-        gsapLib = gsapModule.default || gsapModule;
-        gsapLib.registerPlugin(ScrollTriggerModule.ScrollTrigger || ScrollTriggerModule.default || ScrollTriggerModule);
+        const gsapLib = gsapModule.default || gsapModule;
+        const ScrollTrigger = ScrollTriggerModule.ScrollTrigger || ScrollTriggerModule.default || ScrollTriggerModule;
+        gsapLib.registerPlugin(ScrollTrigger);
 
-        const lines = document.querySelectorAll('.hero__headline-line');
-        gsapLib.set(lines, { y: 36, opacity: 0 });
-        gsapLib.to(lines, {
-          y: 0,
-          opacity: 1,
-          stagger: 0.08,
-          duration: 0.7,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: '.hero',
-            start: 'top+=10 top',
-            once: true,
-          },
-        });
-
-        // Preview card subtle tilt/scale easing on scroll
-        const preview = document.querySelector('.hero__preview-card');
-        if (preview) {
-          gsapLib.fromTo(preview,
-            { rotateX: 5, rotateY: -5, scale: 1.08 },
+        ctx = gsapLib.context(() => {
+          const preview = document.querySelector('.hero__preview-card');
+          if (!preview) return;
+          gsapLib.fromTo(
+            preview,
+            { rotateX: 4, rotateY: -4, scale: 1.04 },
             {
               rotateX: 0,
               rotateY: 0,
@@ -108,323 +145,266 @@ export default function LandingPage() {
                 end: 'center center',
                 scrub: 0.6,
               },
-            }
+            },
           );
-        }
-      } catch (e) {
-        // fail silently — animations are progressive enhancement
-        // console.warn('GSAP failed to load', e);
+        });
+      } catch {
+        /* progressive enhancement */
       }
     })();
 
     return () => {
-      if (gsapLib && gsapLib.context) gsapLib.context(() => {});
-      if (ctx && ctx.revert) ctx.revert();
+      if (ctx?.revert) ctx.revert();
     };
   }, []);
 
-  function AnimatedHeadline({ prefersReduced }) {
-    const parts = [
-      { text: 'Pricing intelligence', accent: false },
-      { text: 'that knows', accent: false },
-      { text: 'when to act', accent: true },
-      { text: '— and when not to.', accent: false },
-    ];
-
-    if (prefersReduced) {
-      return (
-        <h1 className="hero__headline">
-          Pricing intelligence<br />that knows when to act<br />— and when not to.
-        </h1>
-      );
-    }
-
-    const container = {
-      hidden: {},
-      visible: { transition: { staggerChildren: 0.02 } },
-    };
-
-    const letter = {
-      hidden: { y: 60, opacity: 0 },
-      visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 160, damping: 22 } },
-    };
-
-    return (
-      <h1 className="hero__headline">
-        <motion.span variants={container} initial="hidden" animate="visible" className="hero__headline-words">
-          {parts.map((part, wi) => (
-            <span key={wi} className="hero__headline-word" style={{ display: 'inline-block', marginRight: '12px' }}>
-              {part.text.split(' ').map((word, widx) => (
-                <span key={widx} style={{ display: 'inline-block', marginRight: '10px' }}>
-                  {word.split('').map((ch, i) => (
-                    <motion.span key={`${wi}-${widx}-${i}`} variants={letter} className={part.accent ? 'hero__char hero__char--accent' : 'hero__char'} style={{ display: 'inline-block' }}>
-                      {ch}
-                    </motion.span>
-                  ))}
-                </span>
-              ))}
-              {part.accent && <em className="sr-only"> (emphasized) </em>}
-            </span>
-          ))}
-        </motion.span>
-      </h1>
-    );
-  }
-
   return (
     <div className="landing">
+      <a href="#main-content" className="skip-link">Skip to content</a>
       <Navbar />
-      <BackgroundPaths intensity={0.95} />
-      <section className="hero">
+      <BackgroundPaths variant="home" />
 
-        {/* existing hero content follows (kept for clarity) */}
-        <div className="hero__glow" />
-        <div className="hero__content">
-          <div className="hero__text">
-            <AnimatedHeadline prefersReduced={prefersReduced} />
-            <p className="hero__sub">
-              CMPT watches your competitors around the clock, analyses market signals
-              in real time, and tells you exactly what to do with your pricing — backed
-              by data, scored for confidence, and explained in plain language.
-            </p>
-            <div className="hero__ctas">
-              <Link to="/login" className="hero__cta-primary">
-                Analyze a product <ArrowRight size={18} />
+      <main id="main-content">
+        <section className="hero">
+          <div className="hero__glow" />
+          <div className="hero__content">
+            <div className="hero__text">
+              <AnimatedHeadline prefersReduced={prefersReduced} />
+              <p className="hero__sub">
+                Watch competitors, get a scored pricing action, and see the reasoning in plain language.
+              </p>
+              <div className="hero__ctas">
+                <Link to="/login" className="hero__cta-primary">
+                  Analyze a product <ArrowRight size={18} aria-hidden="true" />
+                </Link>
+                <a href="#dashboard-preview" className="hero__cta-ghost">
+                  See a sample report
+                </a>
+              </div>
+            </div>
+
+            <div className="hero__preview">
+              <div className="hero__preview-glow" />
+              <div className="hero__preview-card">
+                <div className="hero__preview-topbar">
+                  <div className="hero__preview-dots" aria-hidden="true"><span /><span /><span /></div>
+                  <span className="hero__preview-label">CMPT Live Dashboard</span>
+                </div>
+                <div className="hero__preview-body">
+                  <div className="hero__preview-row hero__preview-row--between">
+                    <span className="hero__preview-chip">yourstore.com</span>
+                    <span className="hero__preview-meta">3 competitors tracked</span>
+                  </div>
+                  <div className="hero__preview-row">
+                    <span className="hero__preview-badge">REDUCE</span>
+                    <span className="hero__preview-meta">High confidence</span>
+                  </div>
+                  <div className="hero__preview-price">₹ 1,249</div>
+                  <div className="hero__preview-meta">Currently: ₹ 1,499 · Save 16.7%</div>
+                  <ConfidenceBar score={0.82} />
+                  <div className="hero__preview-table">
+                    <div className="hero__preview-th">
+                      <span>Store</span><span>Price</span>
+                    </div>
+                    <div className="hero__preview-tr">
+                      <span>competitor1.com</span><span className="mono">₹ 1,199</span>
+                    </div>
+                    <div className="hero__preview-tr">
+                      <span>competitor2.com</span><span className="mono">₹ 1,299</span>
+                    </div>
+                  </div>
+                  <p className="hero__preview-reason">
+                    Your price is 16.7% above the market median. Reducing to ₹1,249 aligns
+                    you competitively without triggering a race to the bottom.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="trust">
+          <Reveal>
+            <div className="trust__inner">
+              <p className="trust__lead">
+                Most pricing tools give you raw data dumps and leave you to figure out the rest.
+              </p>
+              <p className="trust__bold">
+                CMPT gives you a decision: backed by market data, scored for confidence,
+                and explained in plain language.
+              </p>
+              <p className="trust__sub">
+                No more manual competitor checks. No more pricing gut-feels. Just
+                data-driven pricing intelligence, delivered in seconds.
+              </p>
+            </div>
+          </Reveal>
+        </section>
+
+        <section className="workflow" id="how-it-works">
+          <div className="workflow__inner">
+            <Reveal>
+              <span className="section-eyebrow">How it works</span>
+              <h2 className="section-title">Four steps. One decision.</h2>
+              <p className="section-sub">
+                From URL to actionable pricing recommendation in under 30 seconds.
+              </p>
+            </Reveal>
+            <div className="workflow__grid">
+              {[
+                { t: 'Input a product', d: 'Paste your product URL and competitor store URLs. No API keys, CSV uploads, or config files.', icon: <LinkIcon size={24} aria-hidden="true" /> },
+                { t: 'Crawl & normalise', d: 'Agents read competitor pages for prices, stock, and product details through visual understanding.', icon: <Bot size={24} aria-hidden="true" /> },
+                { t: 'Analyse the market', d: 'The pricing engine cross-references every data point and finds your market position.', icon: <LineChart size={24} aria-hidden="true" /> },
+                { t: 'Get a recommendation', d: 'Receive Reduce, Hold, or Review with a confidence score and plain-language explanation.', icon: <CheckCircle2 size={24} aria-hidden="true" /> },
+              ].map((s, i) => (
+                <Reveal key={s.t} delay={i + 1}>
+                  <div className="workflow__card">
+                    <div className="workflow__card-icon">{s.icon}</div>
+                    <h3 className="workflow__card-title">{s.t}</h3>
+                    <p className="workflow__card-desc">{s.d}</p>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="dash-preview" id="dashboard-preview">
+          <div className="dash-preview__inner">
+            <Reveal>
+              <h2 className="section-title">Your pricing console, not another chart.</h2>
+              <p className="section-sub">
+                Recommendations, competitor data, confidence scores, and explanations in one view.
+              </p>
+            </Reveal>
+            <Reveal>
+              <div className="dash-preview__frame">
+                <div className="dash-preview__glow" />
+                <DashboardMock />
+              </div>
+            </Reveal>
+          </div>
+        </section>
+
+        <section className="features" id="features">
+          <div className="features__inner">
+            <Reveal>
+              <h2 className="section-title">Built for confident decisions.</h2>
+              <p className="section-sub">
+                Merchants should understand why a price recommendation was made before they act.
+              </p>
+            </Reveal>
+            <div className="features__grid features__grid--asymmetric">
+              {[
+                { t: 'Explainable decisions', d: 'Every recommendation includes plain-language reasoning: why, by how much, and what happens if you wait.', icon: <MessageSquareText size={24} aria-hidden="true" />, wide: true },
+                { t: 'Confidence-gated output', d: 'Strong data yields a clear action. Ambiguous data is flagged for review instead of guessed.', icon: <ShieldCheck size={24} aria-hidden="true" />, wide: false },
+                { t: 'Competitor monitoring', d: 'Track prices, stock, variants, and data freshness across competitor stores.', icon: <Activity size={24} aria-hidden="true" />, wide: false },
+                { t: 'Ambiguity handled', d: 'Mismatched SKUs, bundles, or regional variants? CMPT tells you what is unclear and your options.', icon: <AlertTriangle size={24} aria-hidden="true" />, wide: true },
+              ].map((f, i) => (
+                <Reveal key={f.t} delay={(i % 2) + 1}>
+                  <div className={`feature-card ${f.wide ? 'feature-card--wide' : ''}`}>
+                    <span className="feature-card__icon">{f.icon}</span>
+                    <h3 className="feature-card__title">{f.t}</h3>
+                    <p className="feature-card__desc">{f.d}</p>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="ai-safety" id="ai-safety">
+          <div className="ai-safety__inner">
+            <Reveal>
+              <span className="section-eyebrow">AI Safety</span>
+              <h2 className="section-title">The engine is deterministic.<br />The AI explains.</h2>
+              <p className="section-sub">
+                Pricing decisions are too important for a black box. Humans stay in the loop.
+              </p>
+            </Reveal>
+            <div className="ai-safety__grid">
+              {[
+                { t: 'Rule-based decisions', d: 'Pricing logic is deterministic. Same data always yields the same recommendation. AI never makes the pricing call.' },
+                { t: 'AI for explanation only', d: 'AI resolves ambiguous matches and writes the explanation. It interprets; math decides.' },
+                { t: 'Merchant stays in control', d: 'Nothing changes automatically. Every recommendation needs your explicit action.' },
+              ].map((c, i) => (
+                <Reveal key={c.t} delay={i + 1}>
+                  <div className="ai-safety__card">
+                    <h3 className="ai-safety__card-title">{c.t}</h3>
+                    <p className="ai-safety__card-desc">{c.d}</p>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="faq">
+          <div className="faq__inner">
+            <Reveal>
+              <h2 className="section-title">Frequently asked questions</h2>
+            </Reveal>
+            <Reveal>
+              <div className="faq__list">
+                <FAQItem q="What do I need to get started?" a="Your product URL and competitor store URLs. No API keys, developer setup, or CSV exports." />
+                <FAQItem q="Does CMPT automatically change my prices?" a="Never. You get a recommendation with reasoning and confidence. Nothing happens without your explicit action." />
+                <FAQItem q="What if the competitor data is unclear?" a="CMPT flags ambiguous results for manual review and names what is uncertain: mismatched variants, bundles, regional differences, or stale data." />
+                <FAQItem q="How is confidence calculated?" a="Confidence reflects product match quality, data freshness, and price stability. Scores above 70% are considered actionable." />
+                <FAQItem q="Is my product data stored?" a="Analysis results are stored for your run history so you can track trends. We never share or sell merchant data." />
+              </div>
+            </Reveal>
+          </div>
+        </section>
+
+        <section className="final-cta">
+          <Reveal>
+            <div className="final-cta__inner">
+              <div className="final-cta__glow" />
+              <h2 className="final-cta__headline">
+                Ready to stop guessing<br />your prices?
+              </h2>
+              <p className="final-cta__sub">
+                Start analyzing competitors and make data-backed pricing decisions.
+              </p>
+              <Link to="/login" className="final-cta__btn">
+                Start analyzing for free <ArrowRight size={18} aria-hidden="true" />
               </Link>
-              <a href="#dashboard-preview" className="hero__cta-ghost">
-                See a sample report
-              </a>
-            </div>
-          </div>
-
-          <div className="hero__preview">
-            <div className="hero__preview-glow" />
-            <div className="hero__preview-card">
-              <div className="hero__preview-topbar">
-                <div className="hero__preview-dots"><span /><span /><span /></div>
-                <span className="hero__preview-label">CMPT Live Dashboard</span>
-              </div>
-              <div className="hero__preview-body">
-                <div className="hero__preview-row hero__preview-row--between">
-                  <span className="hero__preview-chip">yourstore.com</span>
-                  <span className="hero__preview-meta">3 competitors tracked</span>
-                </div>
-                <div className="hero__preview-row">
-                  <span className="hero__preview-badge">REDUCE</span>
-                  <span className="hero__preview-meta">High confidence</span>
-                </div>
-                <div className="hero__preview-price">₹ 1,249</div>
-                <div className="hero__preview-meta">Currently: ₹ 1,499 · Save 16.7%</div>
-                <ConfidenceBar score={0.82} />
-                <div className="hero__preview-table">
-                  <div className="hero__preview-th">
-                    <span>Store</span><span>Price</span>
-                  </div>
-                  <div className="hero__preview-tr">
-                    <span>competitor1.com</span><span className="mono">₹ 1,199</span>
-                  </div>
-                  <div className="hero__preview-tr">
-                    <span>competitor2.com</span><span className="mono">₹ 1,299</span>
-                  </div>
-                </div>
-                <p className="hero__preview-reason">
-                  Your price is 16.7% above the market median. Reducing to ₹1,249 aligns
-                  you competitively without triggering a race to the bottom.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* scroll indicator */}
-        <div className="hero__scroll">
-          <ChevronDown size={20} />
-        </div>
-      </section>
-
-      {/* ── TRUST ── */}
-      <section className="trust">
-        <Reveal>
-          <div className="trust__inner">
-            <p className="trust__lead">
-              Most pricing tools give you raw data dumps and leave you to figure out the rest.
-            </p>
-            <p className="trust__bold">
-              CMPT gives you a decision — backed by real market data, scored for confidence,
-              and explained in plain language.
-            </p>
-            <p className="trust__sub">
-              No more manual competitor checks. No more pricing gut-feels. No more &quot;we
-              think this is right.&quot; Just data-driven pricing intelligence, delivered in
-              seconds.
-            </p>
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ── HOW IT WORKS ── */}
-      <section className="workflow" id="how-it-works">
-        <div className="workflow__inner">
-          <Reveal>
-            <span className="section-eyebrow">How it works</span>
-            <h2 className="section-title">Four steps. One decision.</h2>
-            <p className="section-sub">
-              From URL to actionable pricing recommendation, in under 30 seconds.
-              No setup, no integrations, no learning curve.
-            </p>
-          </Reveal>
-          <div className="workflow__grid">
-            {[
-              { n: '01', t: 'Input a product', d: 'Paste your product URL and add competitor store URLs. That\'s it — no API keys, no CSV uploads, no config files.', icon: <LinkIcon size={24} /> },
-              { n: '02', t: 'Crawl & normalise', d: 'Our AI agents navigate competitor pages like a human would — reading prices, stock status, and product details through visual understanding.', icon: <Bot size={24} /> },
-              { n: '03', t: 'Analyse the market', d: 'The pricing engine cross-references every data point, calculates your market position, and identifies the optimal pricing strategy.', icon: <LineChart size={24} /> },
-              { n: '04', t: 'Get a recommendation', d: 'Receive a clear action (Reduce, Hold, or Review) with a confidence score and a plain-language explanation you can act on immediately.', icon: <CheckCircle2 size={24} /> },
-            ].map((s, i) => (
-              <Reveal key={s.n} delay={i + 1}>
-                <div className="workflow__card">
-                  <div className="workflow__card-icon">{s.icon}</div>
-                  <span className="workflow__num">{s.n}</span>
-                  <h3 className="workflow__card-title">{s.t}</h3>
-                  <p className="workflow__card-desc">{s.d}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── DASHBOARD PREVIEW ── */}
-      <section className="dash-preview" id="dashboard-preview">
-        <div className="dash-preview__inner">
-          <Reveal>
-            <span className="section-eyebrow">Product Preview</span>
-            <h2 className="section-title">Your pricing console, not another chart.</h2>
-            <p className="section-sub">
-              Everything your pricing team needs in one view — recommendations, competitor
-              data, confidence scores, and AI-generated explanations. No noise.
-            </p>
-          </Reveal>
-          <Reveal>
-            <div className="dash-preview__frame" ref={dashRef}>
-              <div className="dash-preview__glow" />
-              <DashboardMock />
             </div>
           </Reveal>
-        </div>
-      </section>
-
-      {/* ── FEATURES ── */}
-      <section className="features" id="features">
-        <div className="features__inner">
-          <Reveal>
-            <span className="section-eyebrow">Why CMPT</span>
-            <h2 className="section-title">Built for confident decisions.</h2>
-            <p className="section-sub">
-              Every feature is designed around one principle: merchants should understand
-              exactly why a price recommendation was made before they act on it.
-            </p>
-          </Reveal>
-          <div className="features__grid">
-            {[
-              { t: 'Explainable decisions', d: 'Every recommendation comes with a multi-paragraph explanation in plain language. Not "lower your price" — but why, by how much, and what happens if you don\'t.', icon: <MessageSquareText size={24} /> },
-              { t: 'Confidence-gated output', d: 'When the data is strong, you get a clear action. When it\'s ambiguous, CMPT flags it for human review instead of guessing. Low-confidence results never bypass your team.', icon: <ShieldCheck size={24} /> },
-              { t: 'Competitor monitoring', d: 'Track prices, stock availability, product variations, and data freshness across any number of competitor stores. CMPT doesn\'t just scrape — it understands what it\'s looking at.', icon: <Activity size={24} /> },
-              { t: 'Ambiguity handled', d: 'Mismatched SKUs? Bundled pricing? Regional variants? When data doesn\'t line up cleanly, CMPT tells you exactly what\'s unclear and what your options are.', icon: <AlertTriangle size={24} /> },
-            ].map((f, i) => (
-              <Reveal key={f.t} delay={(i % 2) + 1}>
-                <div className="feature-card">
-                  <span className="feature-card__icon">{f.icon}</span>
-                  <h3 className="feature-card__title">{f.t}</h3>
-                  <p className="feature-card__desc">{f.d}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── AI SAFETY ── */}
-      <section className="ai-safety" id="ai-safety">
-        <div className="ai-safety__inner">
-          <Reveal>
-            <span className="section-eyebrow">AI Safety</span>
-            <h2 className="section-title">The engine is deterministic.<br />The AI explains.</h2>
-            <p className="section-sub">
-              Pricing decisions are too important to delegate to a black box.
-              Here's how CMPT keeps humans in the loop at every step.
-            </p>
-          </Reveal>
-          <div className="ai-safety__grid">
-            {[
-              { n: '01', t: 'Rule-based decisions', d: 'The pricing decision logic is entirely rule-based and deterministic. Given the same data, it always produces the same recommendation. AI does not make the pricing call — ever.' },
-              { n: '02', t: 'AI for explanation only', d: 'AI is used to resolve ambiguous product matches and to generate the human-readable explanation. It interprets — it does not decide. The recommendation comes from math, not a language model.' },
-              { n: '03', t: 'Merchant stays in control', d: 'Nothing changes automatically. Every recommendation requires your explicit action to execute. CMPT advises — you decide. That\'s the entire philosophy.' },
-            ].map((c, i) => (
-              <Reveal key={c.n} delay={i + 1}>
-                <div className="ai-safety__card">
-                  <span className="ai-safety__num">{c.n}</span>
-                  <h4 className="ai-safety__card-title">{c.t}</h4>
-                  <p className="ai-safety__card-desc">{c.d}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FAQ ── */}
-      <section className="faq">
-        <div className="faq__inner">
-          <Reveal>
-            <span className="section-eyebrow">FAQ</span>
-            <h2 className="section-title">Frequently asked questions</h2>
-          </Reveal>
-          <Reveal>
-            <div className="faq__list">
-              <FAQItem q="What do I need to get started?" a="Just two things: your product URL and a list of competitor store URLs. No API keys, no developer setup, no CSV exports. Paste the links, click analyze, and CMPT handles everything else." />
-              <FAQItem q="Does CMPT automatically change my prices?" a="Never. CMPT provides a recommendation with full reasoning and a confidence score. You review the recommendation, understand the logic, and decide whether to act. Nothing happens without your explicit action." />
-              <FAQItem q="What if the competitor data is unclear?" a="CMPT flags ambiguous results for manual review and tells you exactly what's uncertain — mismatched product variants, bundled pricing, regional differences, or stale data." />
-              <FAQItem q="How is confidence calculated?" a="Confidence reflects three dimensions: product match quality, data freshness, and price stability. Scores above 70% are considered actionable." />
-              <FAQItem q="Is my product data stored?" a="Analysis results are stored securely for your run history, so you can track pricing trends over time. We never share, sell, or expose merchant data to third parties." />
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── FINAL CTA ── */}
-      <section className="final-cta">
-        <Reveal>
-          <div className="final-cta__inner">
-            <div className="final-cta__glow" />
-            <h2 className="final-cta__headline">
-              Ready to stop guessing<br />your prices?
-            </h2>
-            <p className="final-cta__sub">
-              Start analyzing your competitors and making data-backed pricing decisions.
-            </p>
-            <Link to="/login" className="final-cta__btn">
-              Start analyzing for free <ArrowRight size={18} />
-            </Link>
-          </div>
-        </Reveal>
-      </section>
+        </section>
+      </main>
 
       <Footer />
     </div>
   );
 }
 
-/* ═══ Sub-components ═══ */
-
 function FAQItem({ q, a }) {
   const [open, setOpen] = useState(false);
+  const panelId = `faq-${q.slice(0, 24).replace(/\W+/g, '-').toLowerCase()}`;
+
   return (
     <div className={`faq-item ${open ? 'faq-item--open' : ''}`}>
-      <button className="faq-item__q" onClick={() => setOpen(!open)}>
+      <button
+        type="button"
+        className="faq-item__q"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-controls={panelId}
+      >
         <span>{q}</span>
-        {open ? <Minus size={16} className="faq-item__icon" /> : <Plus size={16} className="faq-item__icon" />}
+        {open
+          ? <Minus size={16} className="faq-item__icon" aria-hidden="true" />
+          : <Plus size={16} className="faq-item__icon" aria-hidden="true" />}
       </button>
-      {open && <div className="faq-item__a">{a}</div>}
+      <div
+        id={panelId}
+        className="faq-item__panel"
+        role="region"
+        aria-hidden={!open}
+      >
+        <div className="faq-item__a">{a}</div>
+      </div>
     </div>
   );
 }
@@ -433,12 +413,12 @@ function DashboardMock() {
   return (
     <div className="mock-dash">
       <div className="mock-dash__chrome">
-        <div className="mock-dash__dots"><span /><span /><span /></div>
+        <div className="mock-dash__dots" aria-hidden="true"><span /><span /><span /></div>
         <span className="mock-dash__url">cmpt.app/dashboard</span>
       </div>
       <div className="mock-dash__header">
         <span className="mock-dash__product">Sneaker X1 Pro</span>
-        <span className="mock-dash__status">● Complete</span>
+        <span className="mock-dash__status">Complete</span>
       </div>
       <div className="mock-dash__body">
         <div className="mock-dash__rec">

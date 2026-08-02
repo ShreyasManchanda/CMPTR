@@ -4,6 +4,7 @@ from typing import Optional
 from crewai import Crew, Process, Task
 
 from pricing.pricing_engine import CompetitorStats
+from utils.agent_output import parse_ambiguity_advice
 from utils.agent_setup import create_crewai_agent
 
 logger = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ class AmbiguityAgent:
         final_action: str,
         stats_map: Optional[CompetitorStats],
         metrics: dict,
-    ):
+    ) -> dict:
         task = Task(
             description=f"""
                 You are given a pricing decision that resulted in "manual_review" due to uncertainty.
@@ -68,4 +69,11 @@ class AmbiguityAgent:
             process=Process.sequential,
         )
 
-        return crew.kickoff()
+        raw = crew.kickoff()
+        advice = parse_ambiguity_advice(raw)
+        logger.info(
+            "Ambiguity advice: %s (confidence=%.2f)",
+            advice.get("recommended_action"),
+            advice.get("confidence_in_advice", 0.0),
+        )
+        return advice

@@ -26,9 +26,11 @@ export default function InputForm({
         <label className="input-form__label" htmlFor="product-url">My product URL</label>
         <input
           id="product-url"
+          name="product-url"
           type="url"
+          autoComplete="url"
           required
-          placeholder="https://yourstore.com/products/my-product"
+          placeholder="https://yourstore.com/products/my-product…"
           value={productUrl}
           onChange={(e) => onUrlChange(e.target.value)}
         />
@@ -38,7 +40,10 @@ export default function InputForm({
         <label className="input-form__label" htmlFor="competitor-urls">Competitor store URLs</label>
         <textarea
           id="competitor-urls"
+          name="competitor-urls"
           rows={4}
+          autoComplete="off"
+          spellCheck={false}
           placeholder={"https://competitor1.com\nhttps://competitor2.com"}
           value={competitorUrls}
           onChange={(e) => onCompetitorChange(e.target.value)}
@@ -79,7 +84,7 @@ export default function InputForm({
       )}
 
       <button type="submit" className="input-form__submit" disabled={loading}>
-        {loading ? 'Analyzing...' : 'Run Analysis'}
+        {loading ? 'Analyzing…' : 'Run Analysis'}
       </button>
     </form>
   );

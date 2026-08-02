@@ -85,7 +85,7 @@ class Recommendation:
 class PricingEngine:
     def __init__(
         self,
-        min_sample_size: int = 1,
+        min_sample_size: int = 2,
         min_avg_confidence: float = 0.6,
         volatility_threshold: float = 0.80,
     ):

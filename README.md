@@ -66,13 +66,14 @@ You paste a product URL and competitor store links. The system crawls competitor
 
 | # | Stage | Description |
 |---|---|---|
-| 1 | **Crawler** | Accumulates product links from competitor store domains (capped to 5 per store) |
-| 2 | **Scraper** | Extracts data via JSON-LD or **Markdown Fallback** (optimized for "Add to Bag") |
-| 3 | **Normalise** | Automated currency conversion via **Frankfurter API** + symbol aliases |
-| 4 | **Price** | Deterministic engine calculates market median and volatility position |
-| 5 | **Rules** | Policy rules gate the recommendation (confidence/sample size thresholds) |
-| 6 | **Ambiguity AI** | LLM resolves ambiguous store signals if the recommendation is `manual_review` |
-| 7 | **Explanation AI** | **Always active.** Generates human-readable context for every recommendation |
+| 1 | **Discover** | Peer-brand search via Firecrawl + Gemini to suggest competitor storefronts |
+| 2 | **Crawler** | Finds matching product links on each competitor domain |
+| 3 | **Scraper** | Firecrawl v2 scrape (`product` / JSON extract + markdown fallback) |
+| 4 | **Normalise** | Currency conversion via **Frankfurter API** + symbol aliases |
+| 5 | **Price** | Deterministic engine calculates market median and volatility position |
+| 6 | **Rules** | Policy rules gate the recommendation (confidence/sample size thresholds) |
+| 7 | **Ambiguity AI** | LLM resolves ambiguous signals when the action is `manual_review` |
+| 8 | **Explanation AI** | **Always active.** Plain-language context for every recommendation |
 
 ---
 
@@ -81,83 +82,99 @@ You paste a product URL and competitor store links. The system crawls competitor
 ### Prerequisites
 
 - **Python 3.11+** and **Node.js 18+**
-- **Docker** (optional but recommended)
+- **Docker** (recommended)
 - API keys: **Gemini** and **Firecrawl**
 
 ### 1. Clone & Configure
 
 ```bash
-git clone https://github.com/ShreyasManchanda/CMPT.git
-cd CMPT
+git clone https://github.com/ShreyasManchanda/CMPTR.git
+cd CMPTR
 ```
 
-Set up your `.env`:
+Copy `.env.example` → `.env` and set keys:
+
 ```env
 FIRECRAWL_API_KEY=your_key
 GEMINI_API_KEY=your_key
-DATABASE_URL=postgresql://postgres:1234@localhost:5432/cmpt_db
+# Docker Compose uses host `db`. Outside Docker, use localhost:
+DATABASE_URL=postgresql://postgres:1234@db:5432/cmpt_db
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 ```
 
-### 2. Start with Docker
+Frontend (optional): copy `frontend/.env.example` → `frontend/.env`
+
+```env
+VITE_API_BASE_URL=http://localhost:8000
+VITE_USE_MOCK=false
+```
+
+### 2. Start backend (Docker)
 
 ```bash
 docker compose up -d
 ```
 
-The system will start PostgreSQL and the FastAPI backend. Use the **init retry loop** logic to ensure a stable connection even if Postgres boots slowly.
+Starts PostgreSQL (`localhost:5432`) and the FastAPI API (`http://localhost:8000`). Health check: `GET /health`.
 
-### 3. Run Tests
-
-The test suite is unified and should be run from the `backend/` directory:
+### 3. Start frontend
 
 ```bash
-# Core logic & Math
+cd frontend
+npm install
+npm run dev
+```
+
+Open **http://localhost:5173**.
+
+### 4. Run Tests
+
+From `backend/`:
+
+```bash
+# Fast unit tests (no live API calls)
+python -m pytest tests/test_unit.py -q
+
+# Pipeline / agents / live scraper (need keys + network)
 python tests/test_pipeline.py
-
-# Live Scraping & Crawling
-python tests/test_scraper.py
-
-# AI Agent Reasoning
 python tests/test_agents.py
+python tests/test_scraper.py
 ```
 
 ---
 
 ## API Endpoints
 
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/health` | Liveness + DB check |
+| `POST` | `/discover-competitors` | Suggest competitor storefronts from a product URL |
+| `POST` | `/analyze` | Synchronous end-to-end analysis |
+| `POST` | `/analyze/jobs` | Start async analysis (preferred for UI) |
+| `GET` | `/analyze/jobs/{job_id}` | Poll async job status / result |
+| `GET` | `/decisions` | Recent pricing decisions |
+| `GET` | `/decisions/{id}` | Single decision detail |
+
+Aliases accepted on analyze/discover bodies: `my_product_url` ↔ `product_url`, `competitor_store_urls` ↔ `competitor_urls`. Optional header `X-API-Key` when `CMPT_API_KEY` is set.
+
 ### `POST /discover-competitors`
-Discover likely competitor storefronts from a product URL.
 
-**Request:**
 ```json
 {
-  "product_url": "https://yourstore.com/p/1"
+  "my_product_url": "https://yourstore.com/products/example"
 }
 ```
 
-**Response:**
+### `POST /analyze/jobs`
+
 ```json
 {
-  "status": "success",
-  "product_name": "Your Product Name",
-  "suggestions": [
-    { "store": "competitor1.com", "url": "https://competitor1.com" },
-    { "store": "competitor2.com", "url": "https://competitor2.com" }
-  ]
+  "my_product_url": "https://yourstore.com/products/example",
+  "competitor_store_urls": ["https://competitor.com"]
 }
 ```
 
-### `POST /analyze`
-Triggers an end-to-end pricing analysis.
-
-**Request:**
-```json
-{
-  "product_url": "https://yourstore.com/p/1",
-  "competitor_urls": ["https://competitor.com"],
-  "// Aliases": "my_product_url and competitor_store_urls also supported"
-}
-```
+Interactive docs: **http://localhost:8000/docs**
 
 ---
 

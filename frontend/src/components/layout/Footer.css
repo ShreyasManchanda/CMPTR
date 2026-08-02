@@ -9,7 +9,7 @@
   max-width: 1100px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  grid-template-columns: 1.5fr 1fr 1fr;
   gap: var(--space-6);
   padding-bottom: var(--space-6);
 }
@@ -68,6 +68,16 @@
 .footer__link:hover {
   color: var(--text-primary);
   opacity: 1;
+}
+
+.footer__link--muted {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.footer__link--muted:hover {
+  color: var(--text-secondary);
+  opacity: 0.45;
 }
 
 .footer__bottom {

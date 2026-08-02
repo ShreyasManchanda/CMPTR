@@ -1,13 +1,14 @@
-import { useRef, useState, Suspense, lazy } from 'react';
-import { motion } from 'framer-motion';
+import { useRef, useState, Suspense, lazy, useCallback } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import Navbar from '../components/layout/Navbar';
 import BackgroundPaths from '../components/ui/BackgroundPaths';
 import StatCard from '../components/ui/StatCard';
 import RecommendationCard from '../components/ui/RecommendationCard';
-import CompetitorRow, { CompetitorCard } from '../components/ui/CompetitorRow';
+import CompetitorRow from '../components/ui/CompetitorRow';
 const TrendChart = lazy(() => import('../components/ui/TrendChart'));
 import ExplanationPanel from '../components/ui/ExplanationPanel';
 import AmbiguityPanel from '../components/ui/AmbiguityPanel';
+import HistoryPanel from '../components/ui/HistoryPanel';
 import RunStatusBadge from '../components/ui/RunStatusBadge';
 import EmptyState from '../components/ui/EmptyState';
 import SkeletonLoader from '../components/ui/SkeletonLoader';
@@ -23,17 +24,68 @@ function getMedian(arr) {
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
+function formatFriendlyError(message) {
+  if (!message) return 'Analysis failed. Check your URLs and try again.';
+  const lower = message.toLowerCase();
+  if (lower.includes('network') || lower.includes('timeout') || lower.includes('econnrefused')) {
+    return 'Could not reach the analysis service. Confirm the backend is running, then retry.';
+  }
+  return message;
+}
+
+function formatRunTime(date) {
+  if (!date) return null;
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+    }).format(date);
+  } catch {
+    return date.toLocaleTimeString();
+  }
+}
+
 export default function Dashboard() {
-  const { result, loading, error, status, analyzeProduct, reset, discoverCompetitors, discoverLoading, discoverError } = useAnalysis();
+  const {
+    result,
+    loading,
+    error,
+    status,
+    analyzeProduct,
+    reset,
+    discoverCompetitors,
+    discoverLoading,
+    discoverError,
+    completedAt,
+    jobProgress,
+    history,
+    historyLoading,
+    historyError,
+    loadHistoryDecision,
+  } = useAnalysis();
   const formRef = useRef(null);
+  const prefersReduced = useReducedMotion();
   const [productUrl, setProductUrl] = useState('');
   const [competitorUrls, setCompetitorUrls] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [selectedSuggestions, setSelectedSuggestions] = useState({});
+  const lastPayload = useRef(null);
 
-  const handleRun = (url, competitors) => {
+  const handleRun = useCallback((url, competitors) => {
+    lastPayload.current = { url, competitors };
     analyzeProduct(url, competitors);
-  };
+  }, [analyzeProduct]);
+
+  const handleRetry = useCallback(() => {
+    const payload = lastPayload.current;
+    if (payload?.url) {
+      analyzeProduct(payload.url, payload.competitors || []);
+      return;
+    }
+    reset();
+    formRef.current?.querySelector('input')?.focus();
+  }, [analyzeProduct, reset]);
 
   const handleDiscover = async (url) => {
     if (!url) return;
@@ -42,7 +94,7 @@ export default function Dashboard() {
       const found = data?.suggestions || [];
       setSuggestions(found);
       setSelectedSuggestions(Object.fromEntries(found.map((item) => [item.url, true])));
-    } catch (err) {
+    } catch {
       setSuggestions([]);
       setSelectedSuggestions({});
     }
@@ -64,47 +116,61 @@ export default function Dashboard() {
       new Set([
         ...competitorUrls.split('\n').map((u) => u.trim()).filter(Boolean),
         ...selected,
-      ])
+      ]),
     );
 
     setCompetitorUrls(normalized.join('\n'));
   };
 
   const scrollToForm = () => {
-    formRef.current?.scrollIntoView({ behavior: 'smooth' });
+    formRef.current?.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth' });
     formRef.current?.querySelector('input')?.focus();
   };
 
-  // Currency symbol lookup
   const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', INR: '₹', JPY: 'JP¥', CNY: 'CN¥', CAD: 'C$', AUD: 'A$', CHF: 'CHF ' };
   const cur = CURRENCY_SYMBOLS[result?.currency] || result?.currency || '$';
 
-  // Derive display values from result
   const competitors = result?.metrics?.competitor_stats || [];
   const stats = {
-    min: competitors.length ? Math.min(...competitors.map(c => c.price)) : null,
-    max: competitors.length ? Math.max(...competitors.map(c => c.price)) : null,
-    median: competitors.length ? getMedian(competitors.map(c => c.price)) : null,
+    min: competitors.length ? Math.min(...competitors.map((c) => c.price)) : null,
+    max: competitors.length ? Math.max(...competitors.map((c) => c.price)) : null,
+    median: competitors.length ? getMedian(competitors.map((c) => c.price)) : null,
     yourPrice: result?.my_price,
     count: competitors.length,
-    avgConf: competitors.length ? (competitors.reduce((a, c) => a + (c.confidence || 0), 0) / competitors.length) : null,
+    avgConf: competitors.length
+      ? competitors.reduce((a, c) => a + (c.confidence || 0), 0) / competitors.length
+      : null,
   };
 
-  const showEmpty = !result && !loading && !error;
+  const showEmpty = !result && !loading;
   const showResult = result && !loading;
+  const friendlyError = formatFriendlyError(error);
+
+  const motionProps = prefersReduced
+    ? {}
+    : {
+        initial: 'hidden',
+        animate: 'visible',
+        variants: {
+          hidden: {},
+          visible: { transition: { staggerChildren: 0.05 } },
+        },
+      };
+
+  const childVariants = prefersReduced
+    ? undefined
+    : { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.28, ease: [0.16, 1, 0.3, 1] } } };
 
   return (
     <div className="dashboard">
+      <a href="#dashboard-main" className="skip-link">Skip to content</a>
       <Navbar />
-      <BackgroundPaths blur={true} />
+      <BackgroundPaths blur />
 
-      {/* TOP BAR (Fix 4) */}
       {showResult && (
         <header className="dashboard__top-bar">
           <div className="dashboard__top-bar-left">
-            <span className="dashboard__product-id-label">
-              {result.product_id}
-            </span>
+            <span className="dashboard__product-id-label">{result.product_id}</span>
           </div>
           <div className="dashboard__top-bar-right">
             <RunStatusBadge status={status} />
@@ -112,16 +178,12 @@ export default function Dashboard() {
         </header>
       )}
 
-      <main className="dashboard__main">
+      <main id="dashboard-main" className="dashboard__main">
         <div className="dashboard__layout">
-          
-          {/* =========================================
-              LEFT SIDEBAR: CONFIGURATION
-              ========================================= */}
           <aside className="dashboard__sidebar" ref={formRef}>
             <div className="dashboard__sidebar-inner">
               <h2 className="dashboard__sidebar-title">Analysis Setup</h2>
-              
+
               <InputForm
                 productUrl={productUrl}
                 competitorUrls={competitorUrls}
@@ -136,62 +198,83 @@ export default function Dashboard() {
                 onSubmit={handleRun}
                 loading={loading}
               />
+
               {discoverError && (
-                <div className="dashboard__discover-error">
-                  <p>{discoverError}</p>
+                <div className="dashboard__discover-error" role="alert">
+                  <p>{formatFriendlyError(discoverError)}</p>
                 </div>
               )}
-              
+
               {result && (
                 <div className="dashboard__run-meta">
-                  <div className="dashboard__run-time">Last run: just now</div>
+                  <div className="dashboard__run-time">
+                    Last run{completedAt ? `: ${formatRunTime(completedAt)}` : ''}
+                    {result.from_history ? ' · from history' : ''}
+                  </div>
                   <div className="dashboard__run-stats">
                     {competitors.length} data point{competitors.length !== 1 ? 's' : ''} processed
                   </div>
                 </div>
               )}
 
+              {loading && jobProgress?.progress && (
+                <div className="dashboard__job-progress" aria-live="polite">
+                  Running analysis… ({String(jobProgress.progress).replace(/_/g, ' ')})
+                </div>
+              )}
+
+              <HistoryPanel
+                decisions={history}
+                loading={historyLoading}
+                error={historyError}
+                activeDecisionId={result?.decision_id}
+                onSelect={(id) => loadHistoryDecision(id)}
+              />
+
               {error && (
-                <div className="dashboard__error">
-                  <p className="dashboard__error-msg">{error}</p>
-                  <button className="dashboard__retry-btn" onClick={() => reset()}>Dismiss</button>
+                <div className="dashboard__error" role="alert">
+                  <p className="dashboard__error-msg">{friendlyError}</p>
+                  <div className="dashboard__error-actions">
+                    <button type="button" className="dashboard__retry-btn" onClick={handleRetry}>
+                      Retry analysis
+                    </button>
+                    <button type="button" className="dashboard__dismiss-btn" onClick={() => reset()}>
+                      Dismiss
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
           </aside>
 
-          {/* =========================================
-              RIGHT AREA: RESULTS
-              ========================================= */}
-          <section className="dashboard__content">
-            
+          <section className="dashboard__content" aria-live="polite">
             {showEmpty && (
               <div className="dashboard__content-empty">
-                <EmptyState onCTA={scrollToForm} />
+                <EmptyState
+                  onCTA={scrollToForm}
+                  title={error ? 'Analysis did not finish' : undefined}
+                  text={error ? friendlyError : undefined}
+                  ctaLabel={error ? 'Fix inputs and retry' : undefined}
+                />
               </div>
             )}
 
             {loading && (
               <div className="dashboard__content-loading">
-                <SkeletonLoader />
+                <SkeletonLoader
+                  progressLabel={
+                    jobProgress?.progress
+                      ? `Running analysis… (${String(jobProgress.progress).replace(/_/g, ' ')})`
+                      : null
+                  }
+                />
               </div>
             )}
 
             {showResult && (
-              <motion.div className="dashboard__results-wrapper"
-                initial="hidden"
-                animate="visible"
-                variants={{
-                  hidden: {},
-                  visible: { transition: { staggerChildren: 0.05 } }
-                }}
-              >
+              <motion.div className="dashboard__results-wrapper" {...motionProps}>
                 <div className="dashboard__results-grid">
-                  
-                  {/* UPPER SPLIT (Main Zone & Side Zone) */}
-                  <motion.div className="dashboard__upper-split" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                    
-                    {/* MAIN ZONE */}
+                  <motion.div className="dashboard__upper-split" variants={childVariants}>
                     <div className="dashboard__main-zone">
                       {result.decision?.action === 'manual_review' && (
                         <AmbiguityPanel advice={result.ai_advice} />
@@ -204,31 +287,30 @@ export default function Dashboard() {
                         policyReason={result.decision?.policy_reason}
                         currency={cur}
                       />
-                      <ExplanationPanel content={result.explanation} />
                     </div>
 
-                    {/* SIDE ZONE */}
                     <div className="dashboard__side-zone">
-                      {/* STATS GRID (Fix 1) */}
                       <div className="dashboard__stats-grid">
                         <StatCard loading={loading} label="Min Price" value={stats.min != null ? `${cur}${stats.min.toLocaleString()}` : '—'} />
                         <StatCard loading={loading} label="Max Price" value={stats.max != null ? `${cur}${stats.max.toLocaleString()}` : '—'} />
                         <StatCard loading={loading} label="Market Median" value={stats.median != null ? `${cur}${stats.median.toLocaleString()}` : '—'} />
-                        <StatCard loading={loading} label="Your Price" value={stats.yourPrice != null ? `${cur}${stats.yourPrice.toLocaleString()}` : '—'} highlight={true} />
+                        <StatCard loading={loading} label="Your Price" value={stats.yourPrice != null ? `${cur}${stats.yourPrice.toLocaleString()}` : '—'} highlight />
                         <StatCard loading={loading} label="Sample Size" value={stats.count ?? '—'} />
                         <StatCard loading={loading} label="Avg Confidence" value={stats.avgConf != null ? `${Math.round(stats.avgConf * 100)}%` : '—'} />
                       </div>
-                      
+
                       <div className="dashboard__ring-card">
                         <ConfidenceRing score={result.decision?.confidence || 0} />
                       </div>
                     </div>
                   </motion.div>
 
-                  {/* LOWER ZONE */}
-                  <motion.div className="dashboard__lower-zone" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
+                  <motion.div className="dashboard__explanation-full" variants={childVariants}>
+                    <ExplanationPanel content={result.explanation} />
+                  </motion.div>
+
+                  <motion.div className="dashboard__lower-zone" variants={childVariants}>
                     <div className="dashboard__lower-split">
-                      
                       <div className="dashboard__table-container">
                         <div className="dashboard__section-label">Raw Competitor Data</div>
                         <div className="dashboard__table-card">
@@ -243,7 +325,7 @@ export default function Dashboard() {
                           <div className="dashboard__table-rows">
                             {competitors.map((c, i) => (
                               <CompetitorRow
-                                key={i}
+                                key={`${c.store}-${i}`}
                                 store={c.store}
                                 productName={c.product_name}
                                 price={c.price}
@@ -259,27 +341,22 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      <div className="dashboard__chart-container" style={{ width: '100%', minWidth: 0, flex: 1, overflow: 'visible' }}>
+                      <div className="dashboard__chart-container">
                         <div className="dashboard__section-label">Price Distribution</div>
-                        <div className="dashboard__chart-card" style={{ width: '100%', height: '100%', flex: 1, minWidth: 0 }}>
+                        <div className="dashboard__chart-card">
                           <Suspense fallback={<div className="dashboard__chart-fallback">Loading chart…</div>}>
                             <TrendChart competitors={competitors} ourPrice={result.my_price} currency={cur} />
                           </Suspense>
                         </div>
                       </div>
-
                     </div>
                   </motion.div>
-
                 </div>
               </motion.div>
             )}
-            
           </section>
         </div>
       </main>
     </div>
   );
 }
-
-

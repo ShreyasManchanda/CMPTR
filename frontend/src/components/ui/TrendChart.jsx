@@ -1,34 +1,53 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, 
-  ResponsiveContainer, ReferenceLine, CartesianGrid } 
-  from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+  CartesianGrid,
+} from 'recharts';
 import './TrendChart.css';
 
-export default function TrendChart({ 
-  competitors, ourPrice, currency = '₹' 
-}) {
+function formatStoreLabel(store) {
+  if (!store) return '—';
+  return store
+    .replace(/^www\./, '')
+    .replace(/^shop-us\./, '')
+    .split('.')[0]
+    .slice(0, 10);
+}
+
+export default function TrendChart({ competitors, ourPrice, currency = '₹' }) {
   if (!competitors || competitors.length === 0) return null;
 
   const data = competitors
-    .filter(c => c.price != null)
+    .filter((c) => c.price != null)
     .map((c, i) => ({
-      name: `Store ${i + 1}`,
+      rank: i + 1,
+      label: formatStoreLabel(c.store),
       fullName: c.store || 'Unknown',
       price: c.price,
     }))
-    .sort((a, b) => a.price - b.price);
+    .sort((a, b) => a.price - b.price)
+    .map((row, i) => ({ ...row, rank: i + 1 }));
+
+  const barCount = data.length;
+  const barSize = Math.min(40, Math.max(12, Math.floor(300 / barCount) - 6));
+  const useAngledLabels = barCount > 5;
+  const bottomMargin = useAngledLabels ? 52 : 24;
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
+      const row = payload[0].payload;
       return (
         <div className="trend-tooltip">
           <p className="trend-tooltip__store">
-            {payload[0].payload.fullName
-              .replace('www.','')
-              .replace('shop-us.','')}
+            {row.fullName.replace('www.', '').replace('shop-us.', '')}
           </p>
           <p className="trend-tooltip__price">
-            {currency} {Number(payload[0].value)
-              .toLocaleString()}
+            {currency} {Number(payload[0].value).toLocaleString()}
           </p>
         </div>
       );
@@ -39,38 +58,23 @@ export default function TrendChart({
   return (
     <div className="trend-chart">
       {ourPrice != null && (
-        <div style={{
-          position: 'absolute',
-          top: '10px',
-          right: '16px',
-          background: 'rgba(10, 10, 10, 0.9)',
-          border: '1px solid rgba(16, 185, 129, 0.3)',
-          borderRadius: '6px',
-          padding: '6px 12px',
-          fontFamily: 'Geist Mono, monospace',
-          fontSize: '14px',
-          fontWeight: 600,
-          color: '#FAFAFA',
-          zIndex: 10,
-        }}>
+        <div className="trend-chart__your-price">
           Your price: {currency}{ourPrice.toLocaleString()}
         </div>
       )}
-      <ResponsiveContainer width="100%" height={280}>
-        <BarChart 
-          data={data} 
-          margin={{ top: 28, right: 48, left: 8, bottom: 8 }}
-          barSize={40}
+      <p className="trend-chart__hint">Hover a bar for the full store name</p>
+      <ResponsiveContainer width="100%" height={240}>
+        <BarChart
+          data={data}
+          margin={{ top: 28, right: 16, left: 4, bottom: bottomMargin }}
+          barCategoryGap={barCount > 6 ? '18%' : '24%'}
+          barSize={barSize}
         >
           <defs>
-            <linearGradient id="barGradient" 
-              x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#10B981" 
-                    stopOpacity={1} />
-              <stop offset="50%" stopColor="#0EA572" 
-                    stopOpacity={0.85} />
-              <stop offset="100%" stopColor="#065F46" 
-                    stopOpacity={0.6} />
+            <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10B981" stopOpacity={1} />
+              <stop offset="50%" stopColor="#0EA572" stopOpacity={0.85} />
+              <stop offset="100%" stopColor="#065F46" stopOpacity={0.6} />
             </linearGradient>
           </defs>
 
@@ -81,16 +85,19 @@ export default function TrendChart({
           />
 
           <XAxis
-            dataKey="name"
+            dataKey="label"
             fontSize={10}
             tickLine={false}
             axisLine={false}
-            tick={{ 
+            interval={0}
+            height={useAngledLabels ? 48 : 28}
+            tick={{
               fill: '#A1A1AA',
               fontFamily: 'Geist Mono, monospace',
-              dy: 8 
+              dy: useAngledLabels ? 4 : 8,
             }}
-            interval={0}
+            angle={useAngledLabels ? -38 : 0}
+            textAnchor={useAngledLabels ? 'end' : 'middle'}
           />
 
           <YAxis
@@ -98,21 +105,16 @@ export default function TrendChart({
             tickLine={false}
             axisLine={false}
             tickFormatter={(val) => `${currency}${val}`}
-            tick={{ 
+            tick={{
               fill: '#A1A1AA',
               fontFamily: 'Geist Mono, monospace',
-              dx: -4 
+              dx: -4,
             }}
             width={52}
-            domain={[0, dataMax => 
-              Math.ceil(dataMax * 1.25)
-            ]}
+            domain={[0, (dataMax) => Math.ceil(dataMax * 1.25)]}
           />
 
-          <Tooltip 
-            content={<CustomTooltip />} 
-            cursor={{ fill: 'rgba(255,255,255,0.03)' }} 
-          />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
 
           <Bar
             dataKey="price"

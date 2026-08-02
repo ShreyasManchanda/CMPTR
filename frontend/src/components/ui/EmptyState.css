@@ -45,3 +45,7 @@
   background: var(--accent-dim);
   transform: translateY(-1px);
 }
+
+.empty-state__cta:active {
+  transform: scale(0.97);
+}

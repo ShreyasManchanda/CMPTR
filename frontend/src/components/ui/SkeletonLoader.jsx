@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import './SkeletonLoader.css';
 
 const STAGES = [
-  'Crawling competitor stores...',
-  'Normalising pricing data...',
-  'Analysing market position...',
-  'Generating recommendation...',
+  'Crawl: reading competitor stores…',
+  'Normalize: aligning prices and currency…',
+  'Decide: scoring market position…',
+  'Explain: writing the recommendation…',
 ];
 
-export default function SkeletonLoader() {
+export default function SkeletonLoader({ progressLabel = null }) {
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
@@ -22,7 +22,9 @@ export default function SkeletonLoader() {
     <div className="skeleton">
       <div className="skeleton__stage">
         <div className="skeleton__spinner" />
-        <p className="skeleton__label" key={idx}>{STAGES[idx]}</p>
+        <p className="skeleton__label" key={progressLabel || idx}>
+          {progressLabel || STAGES[idx]}
+        </p>
       </div>
       <div className="skeleton__grid">
         <div className="skeleton__block skeleton__block--tall" />

@@ -23,17 +23,10 @@ export default function Footer() {
         </div>
 
         <div className="footer__col">
-          <h4 className="footer__col-title">Resources</h4>
-          <a href="#" className="footer__link">Documentation</a>
-          <a href="#" className="footer__link">API Reference</a>
-          <a href="#" className="footer__link">Changelog</a>
-        </div>
-
-        <div className="footer__col">
           <h4 className="footer__col-title">Company</h4>
-          <a href="#" className="footer__link">Privacy</a>
-          <a href="#" className="footer__link">Terms</a>
-          <a href="#" className="footer__link">Contact</a>
+          <span className="footer__link footer__link--muted">Privacy (soon)</span>
+          <span className="footer__link footer__link--muted">Terms (soon)</span>
+          <a href="mailto:hello@cmpt.app" className="footer__link">Contact</a>
         </div>
       </div>
 

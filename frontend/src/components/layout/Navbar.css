@@ -137,11 +137,24 @@
   height: 1.5px;
   background: var(--text-secondary);
   border-radius: 1px;
-  transition: background 0.15s;
+  transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.15s, background 0.15s;
+  transform-origin: center;
 }
 
 .navbar__hamburger:hover span {
   background: var(--text-primary);
+}
+
+.navbar__hamburger--open span:nth-child(1) {
+  transform: translateY(5.5px) rotate(45deg);
+}
+
+.navbar__hamburger--open span:nth-child(2) {
+  opacity: 0;
+}
+
+.navbar__hamburger--open span:nth-child(3) {
+  transform: translateY(-5.5px) rotate(-45deg);
 }
 
 /* Mobile menu */

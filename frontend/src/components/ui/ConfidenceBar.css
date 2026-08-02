@@ -14,8 +14,11 @@
 
 .confidence-bar__fill {
   height: 100%;
+  width: 100%;
   border-radius: 3px;
-  transition: width 1s ease-out;
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .confidence-bar__fill--high {
@@ -31,6 +34,7 @@
   font-size: 13px;
   min-width: 36px;
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .confidence-bar__label--high {
@@ -39,4 +43,10 @@
 
 .confidence-bar__label--medium {
   color: var(--warning);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confidence-bar__fill {
+    transition: none;
+  }
 }

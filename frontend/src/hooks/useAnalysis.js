@@ -1,9 +1,13 @@
-import { useCallback } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useCallback, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { postAnalyze, postDiscoverCompetitors } from '../lib/api';
+import {
+  getDecision,
+  getDecisions,
+  postAnalyze,
+  postDiscoverCompetitors,
+} from '../lib/api';
 
-// ── Mock data for offline / demo mode ──
 const MOCK_RESULT = {
   product_id: 'sneaker-x1-pro',
   my_price: 1499.0,
@@ -13,8 +17,7 @@ const MOCK_RESULT = {
     action: 'reduce',
     suggested_price: 1249.0,
     confidence: 0.82,
-    policy_reason:
-      'Your price is 16.7% above the market median. Reducing to ₹1,249 aligns you competitively without undercutting.',
+    policy_reason: 'requires_human_approval',
   },
   metrics: {
     competitor_stats: [
@@ -46,41 +49,80 @@ const MOCK_RESULT = {
   },
   ai_advice: null,
   explanation:
-    "**Market Position Summary**\n\nYour product is currently priced at ₹1,499, which places it **16.7% above** the median competitor price of ₹1,284.\n\nAll three competitors are offering the same product at lower price points, with the lowest at ₹1,199. The data confidence across sources is strong (average 0.83), and price volatility is low — suggesting these are stable, established prices rather than temporary promotions.\n\n**Recommendation:** Reduce your price to **₹1,249** to position competitively while maintaining margin. This places you slightly below the median without matching the lowest available price.",
+    "**Market Position Summary**\n\nYour product is currently priced at ₹1,499, which places it **16.7% above** the median competitor price of ₹1,284.\n\n**Recommendation:** Reduce your price to **₹1,249** to position competitively while maintaining margin.",
 };
 
+const ACTION_LABELS = {
+  reduce: 'Reduce',
+  increase: 'Increase',
+  no_change: 'Hold',
+  hold: 'Hold',
+  manual_review: 'Manual Review',
+};
+
+function labelForAction(action) {
+  if (!action) return 'Complete';
+  return ACTION_LABELS[action] || String(action).replace(/_/g, ' ');
+}
+
 /**
- * useAnalysis — React Query–powered hook for pricing analysis.
- *
- * Uses `useMutation` because the /analyze endpoint is inherently
- * a POST action (mutations), not a cacheable query.
- *
- * Falls back to mock data when VITE_USE_MOCK !== 'false'.
+ * useAnalysis — React Query hook for pricing analysis + run history.
+ * Falls back to mock data when VITE_USE_MOCK === 'true'.
  */
 export function useAnalysis() {
   const useMock = import.meta.env.VITE_USE_MOCK === 'true';
+  const [completedAt, setCompletedAt] = useState(null);
+  const [jobProgress, setJobProgress] = useState(null);
+  const queryClient = useQueryClient();
 
-  // Mutation backed by React Query
+  const historyQuery = useQuery({
+    queryKey: ['decisions', { limit: 12 }],
+    queryFn: async () => {
+      if (useMock) {
+        return {
+          status: 'success',
+          count: 1,
+          decisions: [
+            {
+              id: 1,
+              product_id: 'sneaker-x1-pro',
+              product_name: 'Sneaker X1 Pro',
+              action: 'reduce',
+              confidence: 0.82,
+              created_at: new Date().toISOString(),
+            },
+          ],
+        };
+      }
+      return getDecisions({ limit: 12 });
+    },
+    staleTime: 15_000,
+    retry: 1,
+  });
+
   const mutation = useMutation({
     mutationFn: async ({ myProductUrl, competitorUrls }) => {
       if (useMock) {
-        // Simulate network latency for demo mode
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+        setJobProgress({ status: 'running', progress: 'mock' });
+        await new Promise((resolve) => setTimeout(resolve, 1800));
         return MOCK_RESULT;
       }
-      return postAnalyze(myProductUrl, competitorUrls);
+      return postAnalyze(myProductUrl, competitorUrls, {
+        onProgress: (job) => setJobProgress(job),
+      });
     },
     onSuccess: (data) => {
-      const action = data?.decision?.action;
-      const actionLabel =
-        action === 'reduce'
-          ? '↓ Reduce'
-          : action === 'no_change'
-            ? '✓ Hold'
-            : '⚠ Manual Review';
-      toast.success(`Analysis complete — ${actionLabel}`);
+      setCompletedAt(new Date());
+      setJobProgress(null);
+      if (data?.decision?.action) {
+        toast.success(`Analysis complete: ${labelForAction(data.decision.action)}`);
+      } else {
+        toast.error('Analysis finished without a recommendation. Please retry.');
+      }
+      queryClient.invalidateQueries({ queryKey: ['decisions'] });
     },
     onError: (error) => {
+      setJobProgress(null);
       toast.error(error.message || 'Analysis failed. Please try again.');
     },
   });
@@ -88,7 +130,7 @@ export function useAnalysis() {
   const discoveryMutation = useMutation({
     mutationFn: async ({ myProductUrl }) => {
       if (useMock) {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         return {
           status: 'success',
           product_name: 'Mock Product',
@@ -105,41 +147,107 @@ export function useAnalysis() {
     },
   });
 
-  // Convenience wrappers matching the original API surface
+  const loadHistoryMutation = useMutation({
+    mutationFn: async (decisionId) => {
+      if (useMock) {
+        return { status: 'success', decision: MOCK_RESULT.decision, result: MOCK_RESULT };
+      }
+      const detail = await getDecision(decisionId);
+      // Reshape history detail into the live analysis result shape the dashboard expects.
+      return {
+        status: 'success',
+        product_id: detail.decision.product_id,
+        product_name: detail.decision.product_name,
+        product_url: detail.decision.product_url,
+        my_price: detail.decision.my_price,
+        currency: detail.decision.currency || detail.competitors?.[0]?.currency || 'USD',
+        decision: {
+          action: detail.decision.action,
+          suggested_price: detail.decision.suggested_price,
+          confidence: detail.decision.confidence,
+          policy_reason: detail.decision.policy_reason,
+        },
+        ai_advice: detail.decision.ai_advice,
+        explanation: detail.decision.explanation,
+        decision_id: detail.decision.id,
+        metrics: {
+          competitor_stats: (detail.competitors || []).map((c) => ({
+            store: c.competitor_url,
+            product_name: c.competitor_url,
+            price: c.price,
+            original_price: c.price,
+            original_currency: c.currency,
+            stock_status: 'unknown',
+            confidence: c.confidence,
+            scraped_at: c.scraped_at,
+          })),
+        },
+        from_history: true,
+      };
+    },
+    onSuccess: () => {
+      setCompletedAt(new Date());
+      toast.success('Loaded run from history');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Could not load that run.');
+    },
+  });
+
   const analyzeProduct = useCallback(
     (myProductUrl, competitorUrls) => {
+      loadHistoryMutation.reset();
       mutation.mutate({ myProductUrl, competitorUrls });
     },
-    [mutation],
+    [mutation, loadHistoryMutation],
   );
 
   const discoverCompetitors = useCallback(
-    (myProductUrl) => {
-      return discoveryMutation.mutateAsync({ myProductUrl });
-    },
+    (myProductUrl) => discoveryMutation.mutateAsync({ myProductUrl }),
     [discoveryMutation],
   );
 
-  const reset = useCallback(() => {
-    mutation.reset();
-  }, [mutation]);
+  const loadHistoryDecision = useCallback(
+    (decisionId) => {
+      mutation.reset();
+      return loadHistoryMutation.mutateAsync(decisionId);
+    },
+    [loadHistoryMutation, mutation],
+  );
 
-  // Derive a simple status label
+  const reset = useCallback(() => {
+    setCompletedAt(null);
+    setJobProgress(null);
+    mutation.reset();
+    loadHistoryMutation.reset();
+  }, [mutation, loadHistoryMutation]);
+
   let status = 'idle';
-  if (mutation.isPending) status = 'running';
-  else if (mutation.isSuccess) status = 'complete';
-  else if (mutation.isError) status = 'error';
+  if (mutation.isPending || loadHistoryMutation.isPending) status = 'running';
+  else if (mutation.isSuccess || loadHistoryMutation.isSuccess) status = 'complete';
+  else if (mutation.isError || loadHistoryMutation.isError) status = 'error';
+
+  const result = loadHistoryMutation.data ?? mutation.data ?? null;
+  const error =
+    loadHistoryMutation.error?.message ?? mutation.error?.message ?? null;
 
   return {
-    result: mutation.data ?? null,
-    loading: mutation.isPending,
-    error: mutation.error?.message ?? null,
+    result,
+    loading: mutation.isPending || loadHistoryMutation.isPending,
+    error,
     status,
+    completedAt,
+    jobProgress,
     analyzeProduct,
     reset,
     discoverCompetitors,
     discoverLoading: discoveryMutation.isPending,
     discoverError: discoveryMutation.error?.message ?? null,
     discoveryResult: discoveryMutation.data ?? null,
+    history: historyQuery.data?.decisions ?? [],
+    historyLoading: historyQuery.isLoading,
+    historyError: historyQuery.error?.message ?? null,
+    refreshHistory: () => queryClient.invalidateQueries({ queryKey: ['decisions'] }),
+    loadHistoryDecision,
   };
 }

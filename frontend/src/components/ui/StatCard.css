@@ -3,14 +3,14 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: var(--space-4);
+  border-radius: 12px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  height: 100%;
-  min-height: 100px;
+  height: auto;
+  min-height: 0;
   position: relative;
   overflow: hidden;
 }
@@ -46,7 +46,7 @@
 
 .stat-card__value {
   font-family: 'Geist Mono', monospace;
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1;
