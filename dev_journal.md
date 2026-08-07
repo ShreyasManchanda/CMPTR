@@ -769,3 +769,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Rules engine withheld recommendation below 79% confidence
 - Explanation avg length: 78 words
 
+### 2026-08-07 15:43 — Database Notes
+- PostgreSQL query time: ~1646ms avg
+- 7 analysis records in DB
+- Connection pool stable
+
