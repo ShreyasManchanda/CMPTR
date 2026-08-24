@@ -896,3 +896,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Markdown fallback triggered for 4 stores
 - Firecrawl avg latency: 1903ms per page
 
+### 2026-08-24 09:00 — Pricing Engine Notes
+- Market median verified against manual spot-checks
+- Rules engine withheld recommendation below 74% confidence
+- Explanation avg length: 89 words
+
