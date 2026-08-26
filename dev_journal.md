@@ -927,3 +927,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Ambiguity agent triggered 25% of the time
 - Avg latency: 1577ms
 
+### 2026-08-26 14:00 — Deployment Notes
+- Backend Docker image builds cleanly
+- CORS headers set for Vercel frontend
+- Railway PORT injection confirmed
+
