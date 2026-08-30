@@ -990,3 +990,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Recharts renders up to 3 competitor data points
 - Mobile layout pass needed on dashboard cards
 
+### 2026-08-30 20:30 — Database Notes
+- PostgreSQL query time: ~1602ms avg
+- 10 analysis records in DB
+- Connection pool stable
+
