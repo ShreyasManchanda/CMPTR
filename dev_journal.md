@@ -1073,3 +1073,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Markdown fallback triggered for 4 stores
 - Firecrawl avg latency: 1577ms per page
 
+### 2026-09-05 20:30 — Agent Notes
+- Gemini explanation quality: consistent for clear price gaps
+- Ambiguity agent flagged promotional pricing in 12 cases
+- Confidence threshold at 89%
+
