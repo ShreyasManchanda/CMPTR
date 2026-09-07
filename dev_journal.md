@@ -1093,3 +1093,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Ambiguity agent flagged promotional pricing in 12 cases
 - Confidence threshold at 73%
 
+### 2026-09-07 15:31 — Frontend Notes
+- React Query stale time: 60s
+- Recharts renders up to 12 competitor data points
+- Mobile layout pass needed on dashboard cards
+
