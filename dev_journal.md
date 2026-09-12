@@ -1144,3 +1144,9 @@ Ongoing development notes, observations, and pipeline metrics.
 - Markdown fallback triggered for 4 stores
 - Firecrawl avg latency: 1658ms per page
 
+### 2026-09-12 15:54 — Pipeline Health Check
+- Scraper ran on 12 test URLs
+- Normalizer handled 5 currencies
+- Ambiguity agent triggered 38% of the time
+- Avg latency: 1175ms
+
