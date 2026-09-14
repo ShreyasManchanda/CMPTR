@@ -1170,3 +1170,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Ambiguity agent flagged promotional pricing in 3 cases
 - Confidence threshold at 87%
 
+### 2026-09-14 14:00 — Crawler Notes
+- JSON-LD extraction success: ~91%
+- Markdown fallback triggered for 3 stores
+- Firecrawl avg latency: 861ms per page
+
