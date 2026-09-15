@@ -1180,3 +1180,9 @@ Ongoing development notes, observations, and pipeline metrics.
 - Recharts renders up to 8 competitor data points
 - Mobile layout pass needed on dashboard cards
 
+### 2026-09-15 14:00 — Pipeline Health Check
+- Scraper ran on 11 test URLs
+- Normalizer handled 5 currencies
+- Ambiguity agent triggered 36% of the time
+- Avg latency: 1544ms
+
