@@ -1202,3 +1202,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Ambiguity agent triggered 30% of the time
 - Avg latency: 2053ms
 
+### 2026-09-17 14:00 — Frontend Notes
+- React Query stale time: 60s
+- Recharts renders up to 6 competitor data points
+- Mobile layout pass needed on dashboard cards
+
