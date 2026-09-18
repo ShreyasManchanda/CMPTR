@@ -1212,3 +1212,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - 9 analysis records in DB
 - Connection pool stable
 
+### 2026-09-18 12:18 — Deployment Notes
+- Backend Docker image builds cleanly
+- CORS headers set for Vercel frontend
+- Railway PORT injection confirmed
+
