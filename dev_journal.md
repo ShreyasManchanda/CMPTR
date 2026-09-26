@@ -1320,3 +1320,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - CORS headers set for Vercel frontend
 - Railway PORT injection confirmed
 
+### 2026-09-26 14:00 — Database Notes
+- PostgreSQL query time: ~1730ms avg
+- 5 analysis records in DB
+- Connection pool stable
+
