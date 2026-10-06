@@ -1471,3 +1471,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Ambiguity agent flagged promotional pricing in 3 cases
 - Confidence threshold at 71%
 
+### 2026-10-06 20:30 — Deployment Notes
+- Backend Docker image builds cleanly
+- CORS headers set for Vercel frontend
+- Railway PORT injection confirmed
+
