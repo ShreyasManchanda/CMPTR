@@ -1476,3 +1476,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - CORS headers set for Vercel frontend
 - Railway PORT injection confirmed
 
+### 2026-10-07 09:00 — Crawler Notes
+- JSON-LD extraction success: ~76%
+- Markdown fallback triggered for 2 stores
+- Firecrawl avg latency: 1865ms per page
+
