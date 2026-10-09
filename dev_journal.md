@@ -1506,3 +1506,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Ambiguity agent flagged promotional pricing in 9 cases
 - Confidence threshold at 87%
 
+### 2026-10-09 10:37 — Agent Notes
+- Gemini explanation quality: consistent for clear price gaps
+- Ambiguity agent flagged promotional pricing in 4 cases
+- Confidence threshold at 87%
+
