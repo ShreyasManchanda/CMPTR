@@ -1578,3 +1578,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Recharts renders up to 12 competitor data points
 - Mobile layout pass needed on dashboard cards
 
+### 2026-10-14 09:01 — Agent Notes
+- Gemini explanation quality: consistent for clear price gaps
+- Ambiguity agent flagged promotional pricing in 3 cases
+- Confidence threshold at 75%
+
