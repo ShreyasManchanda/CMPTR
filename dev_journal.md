@@ -1613,3 +1613,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Markdown fallback triggered for 1 stores
 - Firecrawl avg latency: 2340ms per page
 
+### 2026-10-17 20:30 — Deployment Notes
+- Backend Docker image builds cleanly
+- CORS headers set for Vercel frontend
+- Railway PORT injection confirmed
+
