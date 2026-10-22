@@ -1665,3 +1665,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Rules engine withheld recommendation below 88% confidence
 - Explanation avg length: 48 words
 
+### 2026-10-22 09:37 — Crawler Notes
+- JSON-LD extraction success: ~80%
+- Markdown fallback triggered for 1 stores
+- Firecrawl avg latency: 1891ms per page
+
