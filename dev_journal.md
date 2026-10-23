@@ -1681,3 +1681,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Ambiguity agent triggered 39% of the time
 - Avg latency: 1094ms
 
+### 2026-10-23 14:00 — Pricing Engine Notes
+- Market median verified against manual spot-checks
+- Rules engine withheld recommendation below 78% confidence
+- Explanation avg length: 50 words
+
