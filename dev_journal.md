@@ -1702,3 +1702,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - 12 analysis records in DB
 - Connection pool stable
 
+### 2026-10-24 20:30 — Database Notes
+- PostgreSQL query time: ~1788ms avg
+- 11 analysis records in DB
+- Connection pool stable
+
