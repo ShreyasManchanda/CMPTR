@@ -1697,3 +1697,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Ambiguity agent triggered 20% of the time
 - Avg latency: 1735ms
 
+### 2026-10-24 14:00 — Database Notes
+- PostgreSQL query time: ~1378ms avg
+- 12 analysis records in DB
+- Connection pool stable
+
