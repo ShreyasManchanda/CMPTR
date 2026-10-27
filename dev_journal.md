@@ -1737,3 +1737,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - 10 analysis records in DB
 - Connection pool stable
 
+### 2026-10-27 09:00 — Agent Notes
+- Gemini explanation quality: consistent for clear price gaps
+- Ambiguity agent flagged promotional pricing in 7 cases
+- Confidence threshold at 79%
+
