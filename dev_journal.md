@@ -1808,3 +1808,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - 3 analysis records in DB
 - Connection pool stable
 
+### 2026-11-01 20:30 — Pricing Engine Notes
+- Market median verified against manual spot-checks
+- Rules engine withheld recommendation below 83% confidence
+- Explanation avg length: 49 words
+
