@@ -1813,3 +1813,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Rules engine withheld recommendation below 83% confidence
 - Explanation avg length: 49 words
 
+### 2026-11-02 15:05 — Deployment Notes
+- Backend Docker image builds cleanly
+- CORS headers set for Vercel frontend
+- Railway PORT injection confirmed
+
