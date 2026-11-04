@@ -1838,3 +1838,8 @@ Ongoing development notes, observations, and pipeline metrics.
 - Rules engine withheld recommendation below 89% confidence
 - Explanation avg length: 51 words
 
+### 2026-11-04 14:00 — Frontend Notes
+- React Query stale time: 60s
+- Recharts renders up to 11 competitor data points
+- Mobile layout pass needed on dashboard cards
+
